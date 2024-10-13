@@ -1,2 +1,4 @@
 # IDE packages
 .idea/
+
+__pycache__/

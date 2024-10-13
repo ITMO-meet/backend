@@ -9,4 +9,6 @@
 ## Testing
 Для запуска тестов:
 
-`pytest`
+`pytest tests/unit` - запуск юнит тестов
+
+`pytest tests/unit` - запуск интеграционных тестов
