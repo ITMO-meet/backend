@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Ruff linter
         run: |
-          ruff check . --fix
+          ruff . --fix
 
       - name: Check if there are changes after linting
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
@@ -70,9 +70,8 @@ jobs:
 
       - name: Ensure test coverage is above 80%
         run: |
-          coverage=$(grep '<coverage' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
-          coverage=$(echo "$coverage*100" | bc)
-          if (( $(echo "$coverage < 80" | bc -l) )); then
+          coverage=$(pytest --cov=. | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          if (( $(echo "$coverage < 80" |bc -l) )); then
             echo "Coverage is below 80%: $coverage%"
             exit 1
           else

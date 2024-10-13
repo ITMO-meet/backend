@@ -69,15 +69,16 @@ jobs:
           path: coverage.xml
 
       - name: Ensure test coverage is above 80%
-        run: |
-          coverage=$(grep '<coverage' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
-          coverage=$(echo "$coverage*100" | bc)
-          if (( $(echo "$coverage < 80" | bc -l) )); then
-            echo "Coverage is below 80%: $coverage%"
-            exit 1
-          else
-            echo "Test coverage: $coverage%"
-          fi
+  run: |
+    coverage=$(grep '<coverage' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
+    coverage=$(echo "$coverage*100" | bc)
+    if (( $(echo "$coverage < 80" | bc -l) )); then
+      echo "Coverage is below 80%: $coverage%"
+      exit 1
+    else
+      echo "Test coverage: $coverage%"
+    fi
+
 
   check-pr:
     name: PR checks for merge

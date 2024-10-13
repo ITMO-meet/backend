@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Ruff linter
         run: |
-          ruff check . --fix
+          ruff . --fix
 
       - name: Check if there are changes after linting
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
@@ -62,17 +62,16 @@ jobs:
         run: |
           pytest --cov=./ --cov-report=xml
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          name: coverage-report
-          path: coverage.xml
+          files: ./coverage.xml
+          fail_ci_if_error: true
 
       - name: Ensure test coverage is above 80%
         run: |
-          coverage=$(grep '<coverage' coverage.xml | sed -E 's/.*line-rate="([^"]+)".*/\1/')
-          coverage=$(echo "$coverage*100" | bc)
-          if (( $(echo "$coverage < 80" | bc -l) )); then
+          coverage=$(pytest --cov=. | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          if (( $(echo "$coverage < 80" |bc -l) )); then
             echo "Coverage is below 80%: $coverage%"
             exit 1
           else
