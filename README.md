@@ -11,4 +11,4 @@
 
 `pytest tests/unit` - запуск юнит тестов
 
-`pytest tests/unit` - запуск интеграционных тестов
+`pytest tests/integ` - запуск интеграционных тестов
