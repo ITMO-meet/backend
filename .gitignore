@@ -1,4 +1,4 @@
 # IDE packages
 .idea/
-
+.coverage
 __pycache__/
