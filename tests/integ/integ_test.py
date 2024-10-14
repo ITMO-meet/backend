@@ -12,3 +12,5 @@ def test_rollbar():
         setup_rollbar.main()
         assert e.value == "No token =/"
         
+def test_bad():
+    assert 255 + 1 == 0 # bruh ushort, really??
