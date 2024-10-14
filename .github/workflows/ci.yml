@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
   push:
     branches:
       - dev
@@ -35,8 +36,7 @@ jobs:
           pip install ruff
 
       - name: Run Ruff linter
-        run: |
-          ruff check . --fix
+        run: ruff check . --fix
 
       - name: Check if there are changes after linting
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
