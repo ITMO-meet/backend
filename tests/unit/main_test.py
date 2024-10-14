@@ -12,3 +12,6 @@ def test_rollbar():
         setup_rollbar.main()
         assert e.value == "No token =/"
         
+def test_bad():
+    assert 2 + 2 == 5 # OMG 1984 reference!!!
+        
