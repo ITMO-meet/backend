@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   lint:
-    name: ${{ github.event_name == 'pull_request' && 'lint' || 'Linting' }}
+    name: ${{ github.event_name == 'pull_request' && 'Linting' || 'lint' }}
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTIONS_CHECK_NAME: lint
@@ -42,7 +42,7 @@ jobs:
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
 
   test:
-    name: ${{ github.event_name == 'pull_request' && 'Unit Tests' || 'unit_tests' }}
+    name: ${{ github.event_name == 'pull_request' && 'unit_tests' || 'Unit Tests' }}
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTIONS_CHECK_NAME: unit_tests
@@ -67,7 +67,7 @@ jobs:
           pytest
 
   coverage:
-    name: ${{ github.event_name == 'pull_request' && 'Coverage' || 'code_coverage' }}
+    name: ${{ github.event_name == 'pull_request' && 'code_coverage' || 'Coverage' }}
     runs-on: ubuntu-latest
     needs: test
     env:
