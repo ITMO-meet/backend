@@ -1,7 +1,8 @@
 import pytest
 import rollbar
-
-from app import main, setup_rollbar
+from app import main
+from app import setup_rollbar
+import math
 
 
 def test_main():
