@@ -13,3 +13,8 @@ def test_rollbar():
     with pytest.raises(rollbar.ApiError) as e:
         setup_rollbar.main()
         assert e.value == "No token =/"
+
+        
+def test_bad():
+    assert 255 + 1 == 0 # bruh ushort, really??
+
