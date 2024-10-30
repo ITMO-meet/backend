@@ -48,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTIONS_CHECK_NAME: unit_tests
+      MONGO_URI: ${{ secrets.MONGO_URI }}
 
     steps:
       - name: Checkout code
