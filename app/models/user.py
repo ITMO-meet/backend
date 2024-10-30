@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field
 from bson import ObjectId
 from typing import List, Optional, Dict, Any
-from .pyObject import PyObjectId   
+from .pyObject import PyObjectId
+
 
 class UserModel(BaseModel):
-    id: Optional[PyObjectId] = Field(default=None, alias="_id") 
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
     isu: int
     username: str
     bio: Optional[str] = None
