@@ -1,4 +1,3 @@
-import pytest
 from app.models.pyObject import PyObjectId
 from bson import ObjectId
 

@@ -28,12 +28,15 @@ def get_code_challenge(code_verifier: str):
     return code_challenge.replace("=", "")
 
 
-code_verifier = generate_code_verifier()
-code_challenge = get_code_challenge(code_verifier)
+#code_verifier = generate_code_verifier()
+#code_challenge = get_code_challenge(code_verifier)
 
 
 @router.get("/login_with_password")
 async def login_with_password(username: str, password: str):
+    code_verifier = generate_code_verifier()
+    code_challenge = get_code_challenge(code_verifier)
+
     async with ClientSession() as session:
         auth_resp = await session.get(
             f"{PROVIDER_URL}/protocol/openid-connect/auth",
