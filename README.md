@@ -16,3 +16,6 @@
 `pytest tests/integ` - запуск интеграционных тестов
 
 `pytest tests/integ --cov=app --cov-fail-under=80` - запуск интеграционных тестов с покрытием
+
+## Запуск
+`uvicorn app.main:app --reload`

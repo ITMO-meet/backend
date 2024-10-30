@@ -1,7 +1,5 @@
-def main():
-    return "Hello, world!"
+from fastapi import FastAPI
+from app.api import auth 
+app = FastAPI()
 
-
-if __name__ == "__main__":  # pragma: no cover
-    data = main()
-    print(data)
+app.include_router(auth.router, prefix="/auth")

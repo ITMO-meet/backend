@@ -1,0 +1,25 @@
+# Список данных из my.itmo по запросу:
+
+- sub
+- zoneinfo # timezone
+- birthdate # YYY-MM-DD
+- email_verified # True/False
+- gender # male/female
+- groups:
+  - qualification:
+    - code 
+    - name # Бакалавр
+  - name # P3221
+  - faculty # сокращение и код
+  - course
+- isu
+- preffered_username
+- given_name
+- locale
+- middle_name
+- is_student
+- picture
+- name
+- family_name
+- email
+- edu_email
