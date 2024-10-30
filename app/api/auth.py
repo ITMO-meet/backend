@@ -3,7 +3,7 @@ import html
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from app.utils.db import db_instance
-from app.schemas.user_schema import UserSchema
+from app.models.user import UserModel
 from aiohttp import ClientSession
 from hashlib import sha256
 from base64 import urlsafe_b64encode
@@ -14,7 +14,7 @@ router = APIRouter()
 
 CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
-REDIRECT_URI = "https://my.itmo.ru/login/callback"  # Устанавливаем на жестко заданный адрес
+REDIRECT_URI = "https://my.itmo.ru/login/callback"
 
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
@@ -101,12 +101,31 @@ async def login_with_password(username: str, password: str):
             if existing_user:
                 return RedirectResponse("/auth/dashboard")
             else:
-                return RedirectResponse("/auth/register")
+                return await register_user(user_info)
 
 @router.get("/dashboard")
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
 
-@router.get("/register")
-async def register_stub():
-    return {"message": "Complete your registration to start using the dating service."}
+@router.post("/register")
+async def register_user(user_info: dict):
+    user_collection = db_instance.get_collection("users")
+
+    new_user = UserModel(
+        isu=user_info["isu"],
+        username=user_info["preferred_username"],
+        person_params={
+            "given_name": user_info.get("given_name"),
+            "family_name": user_info.get("family_name"),
+            "gender": user_info.get("gender"),
+            "birthdate": user_info.get("birthdate"),
+            "faculty": user_info.get("groups")[0]["faculty"]["name"] if user_info.get("groups") else None
+        },
+        photos={
+            "logo": user_info.get("picture")
+        },
+        bio=""
+    )
+
+    await user_collection.insert_one(new_user.dict(by_alias=True))
+    return {"message": "User registered successfully"}
