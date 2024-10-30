@@ -6,6 +6,7 @@ from .pyObject import PyObjectId
 
 class UserModel(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id") 
+    usi: int
     username: str
     bio: Optional[str] = None
     photos: Dict[str, Any]

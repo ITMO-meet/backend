@@ -1,19 +1,20 @@
 import re
 import html
-import urllib.parse
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from app.utils.db import db_instance
+from app.schemas.user_schema import UserSchema
 from aiohttp import ClientSession
 from hashlib import sha256
 from base64 import urlsafe_b64encode
 import os
+import urllib.parse
 
 router = APIRouter()
 
 CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
-REDIRECT_URI = "https://my.itmo.ru/login/callback"
+REDIRECT_URI = "https://my.itmo.ru/login/callback"  # Устанавливаем на жестко заданный адрес
 
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
@@ -24,21 +25,20 @@ def get_code_challenge(code_verifier: str):
     code_challenge = urlsafe_b64encode(code_challenge_bytes).decode("utf-8")
     return code_challenge.replace("=", "")
 
+code_verifier = generate_code_verifier()
+code_challenge = get_code_challenge(code_verifier)
+
 @router.get("/login_with_password")
 async def login_with_password(username: str, password: str):
-    code_verifier = generate_code_verifier()
-    code_challenge = get_code_challenge(code_verifier)
-
     async with ClientSession() as session:
         auth_resp = await session.get(
             f"{PROVIDER_URL}/protocol/openid-connect/auth",
             params={
-                "protocol": "oauth2",
-                "response_type": "code",
                 "client_id": CLIENT_ID,
                 "redirect_uri": REDIRECT_URI,
+                "response_type": "code",
                 "scope": "openid profile",
-                "state": "im_not_a_browser",
+                "state": "random_state",
                 "code_challenge_method": "S256",
                 "code_challenge": code_challenge,
             },
@@ -94,15 +94,15 @@ async def login_with_password(username: str, password: str):
                 raise HTTPException(status_code=user_resp.status, detail="User info retrieval failed")
 
             user_info = await user_resp.json()
-            print(user_info)
             user_collection = db_instance.get_collection("users")
             
-            existing_user = await user_collection.find_one({"username": user_info["preferred_username"]})
+            existing_user = await user_collection.find_one({"isu": user_info["isu"]})
             
             if existing_user:
                 return RedirectResponse("/auth/dashboard")
             else:
                 return RedirectResponse("/auth/register")
+
 @router.get("/dashboard")
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
