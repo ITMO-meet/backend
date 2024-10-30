@@ -5,9 +5,11 @@ on:
     branches:
       - main
       - dev
+      - feat/*
   push:
     branches:
       - dev
+      - feat/*
 
 permissions:
   contents: read
