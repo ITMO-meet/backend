@@ -1,14 +1,16 @@
-import re
 import html
+import os
+import re
+import urllib.parse
+from base64 import urlsafe_b64encode
+from hashlib import sha256
+
+from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
-from app.utils.db import db_instance
+
 from app.models.user import UserModel
-from aiohttp import ClientSession
-from hashlib import sha256
-from base64 import urlsafe_b64encode
-import os
-import urllib.parse
+from app.utils.db import db_instance
 
 router = APIRouter()
 
@@ -26,10 +28,6 @@ def get_code_challenge(code_verifier: str):
     code_challenge_bytes = sha256(code_verifier.encode("utf-8")).digest()
     code_challenge = urlsafe_b64encode(code_challenge_bytes).decode("utf-8")
     return code_challenge.replace("=", "")
-
-
-#code_verifier = generate_code_verifier()
-#code_challenge = get_code_challenge(code_verifier)
 
 
 @router.get("/login_with_password")
@@ -51,10 +49,10 @@ async def login_with_password(username: str, password: str):
             },
         )
         auth_resp.raise_for_status()
+        resp_text = await auth_resp.text()
 
-        form_action_match = re.search(
-            r'<form\s+.*?\s+action="(?P<action>.*?)"', await auth_resp.text()
-        )
+        form_regex = re.compile(r'<form\s+.*?\s+action="(?P<action>.*?)"', re.DOTALL)
+        form_action_match = re.search(form_regex, resp_text)
         if not form_action_match:
             raise HTTPException(
                 status_code=500, detail="Failed to find form action for login"
@@ -107,22 +105,29 @@ async def login_with_password(username: str, password: str):
         user_info_url = f"{PROVIDER_URL}/protocol/openid-connect/userinfo"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        async with session.get(user_info_url, headers=headers) as user_resp:
-            if user_resp.status != 200:
-                raise HTTPException(
-                    status_code=user_resp.status, detail="User info retrieval failed"
-                )
+        print("User Info URL pre-session:", user_info_url)
+        print("Headers pre-session:", headers)
 
-            user_info = await user_resp.json()
-            user_collection = db_instance.get_collection("users")
+        user_resp = await session.get(user_info_url, headers=headers)
 
-            existing_user = await user_collection.find_one({"isu": user_info["isu"]})
+        if user_resp.status != 200:
+            raise HTTPException(
+                status_code=user_resp.status, detail="User info retrieval failed"
+            )
 
-            if existing_user:
-                return RedirectResponse("/auth/dashboard")
-            else:
-                await fill_user_info(user_info)
-                return RedirectResponse("/auth/register")
+        user_info = await user_resp.json()
+        user_collection = db_instance.get_collection("users")
+        user_resp.close()
+
+        existing_user = await user_collection.find_one({"isu": user_info["isu"]})
+
+        if existing_user:
+            print("Returning RedirectResponse to /auth/dashboard")
+            return RedirectResponse("/auth/dashboard")
+        else:
+            await fill_user_info(user_info)
+            print("Returning RedirectResponse to /auth/register")
+            return RedirectResponse("/auth/register")
 
 
 @router.get("/dashboard")
