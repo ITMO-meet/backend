@@ -75,6 +75,7 @@ jobs:
     needs: test
     env:
       GITHUB_ACTIONS_CHECK_NAME: code_coverage
+      MONGO_URI: ${{ secrets.MONGO_URI }}
 
     steps:
       - name: Checkout code
