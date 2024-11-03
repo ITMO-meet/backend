@@ -1,8 +1,7 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from dotenv import load_dotenv
-from bson import ObjectId
 
 load_dotenv()
 
