@@ -14,3 +14,7 @@ class TagModel(BaseModel):
         allow_population_by_field = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+class TagSelectionModel(BaseModel):
+    isu: int
+    tags: List[str]
