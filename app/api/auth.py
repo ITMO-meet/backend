@@ -105,7 +105,6 @@ async def login_with_password(username: str, password: str):
         user_info_url = f"{PROVIDER_URL}/protocol/openid-connect/userinfo"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-
         user_resp = await session.get(user_info_url, headers=headers)
 
         if user_resp.status != 200:
@@ -155,4 +154,3 @@ async def fill_user_info(user_info: dict):
     )
 
     await user_collection.insert_one(new_user.dict(by_alias=True))
-

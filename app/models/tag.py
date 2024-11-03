@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from bson import ObjectId
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from .pyObject import PyObjectId
 
 
@@ -14,6 +14,7 @@ class TagModel(BaseModel):
         allow_population_by_field = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
 
 class TagSelectionModel(BaseModel):
     isu: int

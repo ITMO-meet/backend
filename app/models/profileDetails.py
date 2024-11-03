@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class ProfileDetailsModel(BaseModel):
     isu: int
     bio: Optional[str] = ""

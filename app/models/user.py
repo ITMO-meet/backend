@@ -1,7 +1,5 @@
-from pydantic import BaseModel, Field
-from bson import ObjectId
+from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-from .pyObject import PyObjectId
 
 
 class UserModel(BaseModel):

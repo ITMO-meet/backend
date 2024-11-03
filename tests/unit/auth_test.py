@@ -30,24 +30,29 @@ def mock_user_info():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch('app.api.auth.generate_code_verifier') as mock_verifier, \
-         patch('app.api.auth.get_code_challenge') as mock_challenge, \
-         patch('app.api.auth.ClientSession') as mock_session, \
-         patch('app.utils.db.db_instance') as mock_db_instance, \
-         patch('app.api.auth.fill_user_info', new_callable=AsyncMock) as mock_fill_user_info, \
-         patch('app.api.auth.PROVIDER_URL', PROVIDER_URL), \
-         patch('app.api.auth.CLIENT_ID', CLIENT_ID), \
-         patch('app.api.auth.REDIRECT_URI', REDIRECT_URI):
+    with patch("app.api.auth.generate_code_verifier") as mock_verifier, patch(
+        "app.api.auth.get_code_challenge"
+    ) as mock_challenge, patch("app.api.auth.ClientSession") as mock_session, patch(
+        "app.utils.db.db_instance"
+    ) as mock_db_instance, patch(
+        "app.api.auth.fill_user_info", new_callable=AsyncMock
+    ) as mock_fill_user_info, patch(
+        "app.api.auth.PROVIDER_URL", PROVIDER_URL
+    ), patch(
+        "app.api.auth.CLIENT_ID", CLIENT_ID
+    ), patch(
+        "app.api.auth.REDIRECT_URI", REDIRECT_URI
+    ):
 
-        mock_verifier.return_value = 'test_code_verifier'
-        mock_challenge.return_value = 'test_code_challenge'
+        mock_verifier.return_value = "test_code_verifier"
+        mock_challenge.return_value = "test_code_challenge"
 
         yield {
-            'mock_verifier': mock_verifier,
-            'mock_challenge': mock_challenge,
-            'mock_session': mock_session,
-            'mock_db_instance': mock_db_instance,
-            'mock_fill_user_info': mock_fill_user_info,
+            "mock_verifier": mock_verifier,
+            "mock_challenge": mock_challenge,
+            "mock_session": mock_session,
+            "mock_db_instance": mock_db_instance,
+            "mock_fill_user_info": mock_fill_user_info,
         }
 
 
@@ -67,21 +72,23 @@ def test_get_code_challenge():
 @pytest.mark.asyncio
 async def test_login_with_password_success(mock_user_info, mock_dependencies):
     session_instance = AsyncMock()
-    mock_dependencies['mock_session'].return_value.__aenter__.return_value = session_instance
-    mock_dependencies['mock_session'].return_value.__aexit__.return_value = AsyncMock()
+    mock_dependencies["mock_session"].return_value.__aenter__.return_value = (
+        session_instance
+    )
+    mock_dependencies["mock_session"].return_value.__aexit__.return_value = AsyncMock()
 
     auth_resp = AsyncMock()
     auth_resp.status = 200
     auth_resp.text.return_value = f'<form method="post" action="{PROVIDER_URL}"></form>'
-    auth_resp.cookies = {'some_cookie': 'cookie_value'}
+    auth_resp.cookies = {"some_cookie": "cookie_value"}
 
     form_resp = AsyncMock()
     form_resp.status = 302
-    form_resp.headers = {'Location': f'{REDIRECT_URI}?code=auth_code_value'}
+    form_resp.headers = {"Location": f"{REDIRECT_URI}?code=auth_code_value"}
 
     token_resp = AsyncMock()
     token_resp.status = 200
-    token_resp.json.return_value = {'access_token': 'test_access_token'}
+    token_resp.json.return_value = {"access_token": "test_access_token"}
 
     user_resp = AsyncMock()
     user_resp.status = 200
@@ -92,13 +99,15 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
     user_collection_mock = AsyncMock()
     user_collection_mock.find_one.return_value = {
-        'isu': mock_user_info['isu'],
-        'username': mock_user_info['preferred_username']
+        "isu": mock_user_info["isu"],
+        "username": mock_user_info["preferred_username"],
     }
 
-    mock_dependencies['mock_db_instance'].get_collection.return_value = user_collection_mock
+    mock_dependencies["mock_db_instance"].get_collection.return_value = (
+        user_collection_mock
+    )
 
-    response = await login_with_password('test_user', 'test_password')
+    response = await login_with_password("test_user", "test_password")
 
     assert isinstance(response, RedirectResponse)
     assert response.status_code == 307
@@ -106,9 +115,11 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
 
 @pytest.mark.asyncio
-async def test_login_with_password_invalid_credentials(mock_user_info, mock_dependencies):
-    mock_session = mock_dependencies['mock_session']
-    mock_fill_user_info = mock_dependencies['mock_fill_user_info']
+async def test_login_with_password_invalid_credentials(
+    mock_user_info, mock_dependencies
+):
+    mock_session = mock_dependencies["mock_session"]
+    mock_fill_user_info = mock_dependencies["mock_fill_user_info"]
 
     session_instance = AsyncMock()
     mock_session.return_value.__aenter__.return_value = session_instance
@@ -116,7 +127,7 @@ async def test_login_with_password_invalid_credentials(mock_user_info, mock_depe
     auth_resp = AsyncMock()
     auth_resp.status = 200
     auth_resp.text.return_value = f'<form method="post" action="{PROVIDER_URL}"></form>'
-    auth_resp.cookies = {'some_cookie': 'cookie_value'}
+    auth_resp.cookies = {"some_cookie": "cookie_value"}
 
     form_resp = AsyncMock()
     form_resp.status = 401
@@ -125,33 +136,35 @@ async def test_login_with_password_invalid_credentials(mock_user_info, mock_depe
     session_instance.post.side_effect = [form_resp]
 
     with pytest.raises(HTTPException) as exc_info:
-        await login_with_password('test_user', 'wrong_password')
+        await login_with_password("test_user", "wrong_password")
 
     assert exc_info.value.status_code == 401
-    assert exc_info.value.detail == 'Login failed with provided credentials'
+    assert exc_info.value.detail == "Login failed with provided credentials"
 
     mock_fill_user_info.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_login_with_password_form_action_not_found(mock_user_info, mock_dependencies):
-    mock_session = mock_dependencies['mock_session']
-    mock_fill_user_info = mock_dependencies['mock_fill_user_info']
+async def test_login_with_password_form_action_not_found(
+    mock_user_info, mock_dependencies
+):
+    mock_session = mock_dependencies["mock_session"]
+    mock_fill_user_info = mock_dependencies["mock_fill_user_info"]
 
     session_instance = AsyncMock()
     mock_session.return_value.__aenter__.return_value = session_instance
 
     auth_resp = AsyncMock()
     auth_resp.status = 200
-    auth_resp.text.return_value = '<html>No form here</html>'
-    auth_resp.cookies = {'some_cookie': 'cookie_value'}
+    auth_resp.text.return_value = "<html>No form here</html>"
+    auth_resp.cookies = {"some_cookie": "cookie_value"}
 
     session_instance.get.side_effect = [auth_resp]
 
     with pytest.raises(HTTPException) as exc_info:
-        await login_with_password('test_user', 'test_password')
+        await login_with_password("test_user", "test_password")
 
     assert exc_info.value.status_code == 500
-    assert exc_info.value.detail == 'Failed to find form action for login'
+    assert exc_info.value.detail == "Failed to find form action for login"
 
     mock_fill_user_info.assert_not_called()
