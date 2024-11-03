@@ -27,20 +27,7 @@ class Database:
         result = await self.db["tags"].insert_many(tags)
         return [str(tag_id) for tag_id in result.inserted_ids]
 
-    async def update_user_fields(
-        self, isu: int, update_fields: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
-        collection = self.get_collection("users")
 
-        result = await collection.update_one(
-            {"isu": ObjectId(isu)}, {"$set": update_fields}
-        )
-
-        if result.modified_count > 0:
-            updated_user = await collection.find_one({"isu": ObjectId(isu)})
-            return updated_user
-        else:
-            return None
 
 
 db_instance = Database()
