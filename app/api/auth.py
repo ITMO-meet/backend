@@ -105,8 +105,6 @@ async def login_with_password(username: str, password: str):
         user_info_url = f"{PROVIDER_URL}/protocol/openid-connect/userinfo"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        print("User Info URL pre-session:", user_info_url)
-        print("Headers pre-session:", headers)
 
         user_resp = await session.get(user_info_url, headers=headers)
 
@@ -127,7 +125,7 @@ async def login_with_password(username: str, password: str):
         else:
             await fill_user_info(user_info)
             print("Returning RedirectResponse to /auth/register")
-            return RedirectResponse("/auth/register")
+            return RedirectResponse("/auth/register/select_tags")
 
 
 @router.get("/dashboard")
