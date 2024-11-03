@@ -147,19 +147,14 @@ async def fill_user_info(user_info: dict):
             "gender": user_info.get("gender"),
             "birthdate": user_info.get("birthdate"),
             "faculty": (
-                user_info.get("groups")[0]["faculty"]["name"]
+                user_info.get("groups")[0]["faculty"]["name"].capitalize()
                 if user_info.get("groups")
                 else None
             ),
         },
-        photos={"logo": user_info.get("picture")},
+        photos={"logo": "stub"},
         bio="",
     )
 
     await user_collection.insert_one(new_user.dict(by_alias=True))
 
-
-@router.get("/register")
-async def registration_succes_stub():
-    # user data (bio, tags, etc will be updated here)
-    return {"message": "Registration successfull!"}

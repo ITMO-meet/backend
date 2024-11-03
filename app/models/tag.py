@@ -4,14 +4,13 @@ from typing import List, Optional, Dict, Any
 from .pyObject import PyObjectId
 
 
-class UserModel(BaseModel):
-    isu: int
-    username: str
-    bio: Optional[str] = None
-    photos: Dict[str, Any] = {}
-    tags: Dict[str, List[Any]] = []
-    person_params: Dict[str, Any] = {}
+class TagModel(BaseModel):
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    is_special: int
+    description: str
 
     class Config:
         allow_population_by_field = True
         arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}

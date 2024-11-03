@@ -16,6 +16,15 @@ class Database:
 
     def get_collection(self, collection_name):
         return self.db[collection_name]
+    
+    # async def get_available_tags(self):
+    #     tags = await self.db["tags"].find().to_list(length=None)
+    #     return [tag["name"] for tag in tags]
+    
+    # async def update_user_tags(self, selected_tags):
+    #     user = {"tags": selected_tags}
+    #     result = await self.db["users"].insert_one(user)
+    #     return str(result.inserted_id)
 
 
 db_instance = Database()
