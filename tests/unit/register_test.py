@@ -132,7 +132,7 @@ async def test_upload_logo_success():
             db_instance,
             "upload_file_to_minio",
             return_value="http://minio.test/logos/logo.jpg",
-        ) as mock_upload:
+        ):
             mock_update_result = MagicMock()
             mock_update_result.modified_count = 1
             mock_users_collection.update_one.return_value = mock_update_result

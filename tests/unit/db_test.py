@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
+from unittest.mock import AsyncMock, MagicMock
 from app.utils.db import Database
 
 
@@ -16,11 +17,6 @@ def test_get_collection(db_instance):
     collection_name = "test_collection"
     collection = db_instance.get_collection(collection_name)
     assert collection.name == collection_name, "Collection name mismatch"
-
-
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from app.utils.db import Database
 
 
 @pytest.mark.asyncio
