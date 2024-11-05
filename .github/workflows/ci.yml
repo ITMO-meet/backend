@@ -49,6 +49,11 @@ jobs:
     env:
       GITHUB_ACTIONS_CHECK_NAME: unit_tests
       MONGO_URI: ${{ secrets.MONGO_URI }}
+      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+      MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
+      MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
 
     steps:
       - name: Checkout code
@@ -76,6 +81,11 @@ jobs:
     env:
       GITHUB_ACTIONS_CHECK_NAME: code_coverage
       MONGO_URI: ${{ secrets.MONGO_URI }}
+      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+      MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
+      MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
 
     steps:
       - name: Checkout code
