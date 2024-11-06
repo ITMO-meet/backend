@@ -8,8 +8,6 @@ from fastapi.testclient import TestClient
 client = TestClient(app)
 
 
-
-
 def test_rollbar():
     with pytest.raises(rollbar.ApiError) as e:
         setup_rollbar.main()
