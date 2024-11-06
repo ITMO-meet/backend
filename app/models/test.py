@@ -18,17 +18,7 @@ class TestModel(BaseModel):
 
 class QuestionModel(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
-    test_id: PyObjectId
     description: str
-    answers: List[str] = [
-        "Нет",
-        "Скорее нет",
-        "Скорее да, чем нет",
-        "Нейтрально",
-        "Скорее да",
-        "Да",
-        "Твердо да",
-    ]
 
     class Config:
         allow_population_by_field = True

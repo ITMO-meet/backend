@@ -57,41 +57,25 @@ class Database:
         result = await self.db["tags"].insert_many(tags)
         return [str(tag_id) for tag_id in result.inserted_ids]
 
-    async def create_test(self, name: str, description: str, questions: List[ObjectId]):
-        test_data = {"name": name, "description": description, "questions": questions}
+    async def create_test(self, name: str, description: str, question_ids: List[ObjectId]):
+        test_data = {"name": name, "description": description, "question_ids": question_ids}
         result = await self.db["tests"].insert_one(test_data)
         return str(result.inserted_id)
 
     async def get_test(self, test_id: str):
         return await self.db["tests"].find_one({"_id": ObjectId(test_id)})
 
-    async def create_question(self, test_id: str, description: str):
-        question_data = {
-            "test_id": ObjectId(test_id),
-            "description": description,
-            "answers": [
-                "Нет",
-                "Скорее нет",
-                "Скорее да, чем нет",
-                "Нейтрально",
-                "Скорее да",
-                "Да",
-                "Твердо да",
-            ],
-        }
+    async def create_question(self, description: str):
+        question_data = {"description": description}
         result = await self.db["questions"].insert_one(question_data)
         return str(result.inserted_id)
 
-    async def get_question(self, test_id: str, question_number: int):
-        questions = (
-            await self.db["questions"]
-            .find({"test_id": ObjectId(test_id)})
-            .to_list(length=None)
-        )
-
-        if question_number < len(questions):
-            return questions[question_number]
-        return None
+   
+    
+    async def get_questions_by_ids(self, question_ids: List[str]):
+        question_object_ids = [ObjectId(qid) for qid in question_ids]
+        questions = await self.db["questions"].find({"_id": {"$in": question_object_ids}}).to_list(length=None)
+        return questions
 
     # review
     async def create_result(self, user_id: int, test_id: str):

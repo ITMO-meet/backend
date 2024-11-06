@@ -7,7 +7,6 @@ router = APIRouter()
 
 @router.get("/{test_id}")
 async def get_test_info(test_id: str):
-    print("getting info")
     test = await db_instance.get_test(test_id)
 
     if not test:
@@ -15,7 +14,7 @@ async def get_test_info(test_id: str):
     return {
         "name": test["name"],
         "description": test["description"],
-        "questions_count": len(test["questions"]),
+        "questions_count": len(test["question_ids"]),
     }
 
 
@@ -30,13 +29,18 @@ async def start_test(test_id: str, payload: StartTestRequest):
 
 @router.get("/{test_id}/question/{question_number}")
 async def get_question(test_id: str, question_number: int):
-    question = await db_instance.get_question(test_id, question_number)
+    test = await db_instance.get_test(test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
 
-    if not question:
+    question_ids = test.get("question_ids", [])
+    if question_number >= len(question_ids):
         raise HTTPException(status_code=404, detail="Question not found")
+
+    question_id = question_ids[question_number]
+    question = await db_instance.get_question_by_id(question_id)
 
     return {
         "description": question["description"],
-        "answers": question["answers"],
         "question_number": question_number,
     }
