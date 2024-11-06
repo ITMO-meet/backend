@@ -2,6 +2,7 @@ import asyncio
 from db import db_instance
 from bson import ObjectId
 
+
 async def create_test_with_questions():
     test_name = "Пример теста"
     test_description = "Это тест для проверки вашего отношения к разным темам."
@@ -13,9 +14,7 @@ async def create_test_with_questions():
     ]
 
     test_id = await db_instance.create_test(
-        name=test_name, 
-        description=test_description, 
-        questions=[]
+        name=test_name, description=test_description, questions=[]
     )
     print(f"Создан тест с ID: {test_id}")
 
@@ -26,8 +25,7 @@ async def create_test_with_questions():
         print(f"Создан вопрос с ID: {question_id}")
 
     await db_instance.get_collection("tests").update_one(
-        {"_id": ObjectId(test_id)},
-        {"$set": {"questions": question_ids}}
+        {"_id": ObjectId(test_id)}, {"$set": {"questions": question_ids}}
     )
     print(f"Тест обновлен с вопросами: {question_ids}")
 

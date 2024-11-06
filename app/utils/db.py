@@ -57,39 +57,42 @@ class Database:
         result = await self.db["tags"].insert_many(tags)
         return [str(tag_id) for tag_id in result.inserted_ids]
 
-
     async def create_test(self, name: str, description: str, questions: List[ObjectId]):
-        test_data = {
-            "name": name,
-            "description": description,
-            "questions": questions
-        }
+        test_data = {"name": name, "description": description, "questions": questions}
         result = await self.db["tests"].insert_one(test_data)
         return str(result.inserted_id)
-    
+
     async def get_test(self, test_id: str):
-        return await self.db["tests"].find_one(
-            {"_id": ObjectId(test_id)}
-        )
-    
+        return await self.db["tests"].find_one({"_id": ObjectId(test_id)})
+
     async def create_question(self, test_id: str, description: str):
         question_data = {
             "test_id": ObjectId(test_id),
             "description": description,
-            "answers": ["Нет", "Скорее нет", "Скорее да, чем нет", "Нейтрально", "Скорее да", "Да", "Твердо да"]
+            "answers": [
+                "Нет",
+                "Скорее нет",
+                "Скорее да, чем нет",
+                "Нейтрально",
+                "Скорее да",
+                "Да",
+                "Твердо да",
+            ],
         }
         result = await self.db["questions"].insert_one(question_data)
         return str(result.inserted_id)
-    
+
     async def get_question(self, test_id: str, question_number: int):
-        questions = await self.db["questions"].find(
-            {"test_id": ObjectId(test_id)}
+        questions = (
+            await self.db["questions"]
+            .find({"test_id": ObjectId(test_id)})
+            .to_list(length=None)
         )
 
         if question_number < len(questions):
             return questions[question_number]
         return None
-    
+
     # review
     async def create_result(self, user_id: int, test_id: str):
         result_data = {
@@ -97,40 +100,38 @@ class Database:
             "test_id": ObjectId(test_id),
             "answers": [],
             "score": None,
-            "completed": False
+            "completed": False,
         }
         result = await self.db["results"].insert_one(result_data)
         return str(result.inserted_id)
-    
+
     async def update_result(self, result_id: str, answer: int):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
 
         if not result or result["completed"]:
             return None
-        
+
         updated_answers = result["answers"] + [answer]
 
         await self.db["results"].update_one(
-            {"_id": ObjectId(result_id)},
-            {"$set": {"answers": updated_answers}}
+            {"_id": ObjectId(result_id)}, {"$set": {"answers": updated_answers}}
         )
         return updated_answers
 
-    
     async def complete_test(self, result_id: str):
-        result = await self.db["results"].find_one({"_id":ObjectId(result_id)})
+        result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         if not result:
             return None
-        
+
         score = sum(result["answers"]) / (len(result["answers"]) * 6) * 100
         await self.db["results"].update_one(
-            {"_id": ObjectId(result_id)},
-            {"$set": {"score": score, "completed": True}}
+            {"_id": ObjectId(result_id)}, {"$set": {"score": score, "completed": True}}
         )
         return score
 
     async def get_result(self, result_id: str):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         return result
+
 
 db_instance = Database()

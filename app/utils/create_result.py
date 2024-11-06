@@ -1,6 +1,6 @@
 import asyncio
 from db import db_instance
-from bson import ObjectId
+
 
 async def create_and_complete_test_result():
     user_id = 386871
@@ -9,7 +9,7 @@ async def create_and_complete_test_result():
     result_id = await db_instance.create_result(user_id=user_id, test_id=test_id)
     print(f"Создан результат теста с ID: {result_id}")
 
-    answers = [1, 3, 5, 6] 
+    answers = [1, 3, 5, 6]
     for answer in answers:
         updated_answers = await db_instance.update_result(result_id, answer)
         print(f"Ответы обновлены: {updated_answers}")

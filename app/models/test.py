@@ -21,8 +21,13 @@ class QuestionModel(BaseModel):
     test_id: PyObjectId
     description: str
     answers: List[str] = [
-        "Нет", "Скорее нет", "Скорее да, чем нет", "Нейтрально", 
-        "Скорее да", "Да", "Твердо да"
+        "Нет",
+        "Скорее нет",
+        "Скорее да, чем нет",
+        "Нейтрально",
+        "Скорее да",
+        "Да",
+        "Твердо да",
     ]
 
     class Config:
@@ -43,3 +48,11 @@ class ResultModel(BaseModel):
         allow_population_by_field = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+
+class StartTestRequest(BaseModel):
+    user_id: int
+
+
+class AnswerRequest(BaseModel):
+    answer: int
