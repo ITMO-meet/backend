@@ -119,12 +119,10 @@ async def login_with_password(username: str, password: str):
         existing_user = await user_collection.find_one({"isu": user_info["isu"]})
 
         if existing_user:
-            print("Returning RedirectResponse to /auth/dashboard")
             return RedirectResponse("/auth/dashboard")
         else:
             await fill_user_info(user_info)
-            print("Returning RedirectResponse to /auth/register")
-            return RedirectResponse("/auth/register/select_tags")
+            return RedirectResponse("/auth/register/select_username")
 
 
 @router.get("/dashboard")

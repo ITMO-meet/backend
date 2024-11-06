@@ -10,8 +10,14 @@ async def populate_tags():
             "is_special": 0,
             "description": "Человек фанат анекдотов.",
         },
-        {"name": "Шизофрения", "is_special": 1, "description": "Тут все понятно."},
+        {"name": "Шизофрения", "is_special": 0, "description": "Тут все понятно."},
         {"name": "Test Tag", "is_special": 0, "description": "Тест"},
+        {"name": "Dates", "is_special": 1, "description": "Свидания"},
+        {"name": "Relationships", "is_special": 1, "description": "Отношения"},
+        {"name": "Friendship", "is_special": 1, "description": "Дружба"},
+        {"name": "Communication", "is_special": 1, "description": "Общение"},
+
+        
     ]
 
     inserted_ids = await db_instance.add_test_tags(test_tags)
