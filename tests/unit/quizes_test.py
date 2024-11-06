@@ -156,7 +156,7 @@ async def test_get_question_test_not_found():
 @pytest.mark.asyncio
 async def test_get_question_question_not_found():
     test_id = "test123"
-    question_number = 5  # Out of bounds
+    question_number = 5
     test_data = {
         "question_ids": ["q1", "q2", "q3"],
     }

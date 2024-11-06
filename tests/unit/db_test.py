@@ -57,7 +57,6 @@ async def test_get_available_tags():
 
 @pytest.mark.asyncio
 async def test_create_test(db_instance):
-    # Lines 63-69: Testing create_test method
     mock_tests_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_tests_collection
 
@@ -84,7 +83,6 @@ async def test_create_test(db_instance):
 
 @pytest.mark.asyncio
 async def test_get_test(db_instance):
-    # Line 72: Testing get_test method
     mock_tests_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_tests_collection
 
@@ -107,7 +105,6 @@ async def test_get_test(db_instance):
 
 @pytest.mark.asyncio
 async def test_create_question(db_instance):
-    # Lines 75-77: Testing create_question method
     mock_questions_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_questions_collection
 
@@ -128,7 +125,6 @@ async def test_create_question(db_instance):
 
 @pytest.mark.asyncio
 async def test_get_question_by_id(db_instance):
-    # Lines 80-81: Testing get_question_by_id method
     mock_questions_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_questions_collection
 
@@ -151,7 +147,6 @@ async def test_get_question_by_id(db_instance):
 
 @pytest.mark.asyncio
 async def test_create_result(db_instance):
-    # Lines 85-93: Testing create_result method
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -180,7 +175,6 @@ async def test_create_result(db_instance):
 
 @pytest.mark.asyncio
 async def test_update_result_success(db_instance):
-    # Lines 96-109: Testing update_result method (success case)
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -214,7 +208,6 @@ async def test_update_result_success(db_instance):
 
 @pytest.mark.asyncio
 async def test_update_result_completed(db_instance):
-    # Lines 96-109: Testing update_result method (completed test case)
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -242,7 +235,6 @@ async def test_update_result_completed(db_instance):
 
 @pytest.mark.asyncio
 async def test_update_result_invalid_index(db_instance):
-    # Lines 96-109: Testing update_result method (invalid index case)
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -254,7 +246,7 @@ async def test_update_result_invalid_index(db_instance):
     }
     mock_results_collection.find_one = AsyncMock(return_value=existing_result)
 
-    question_index = 5  # Index out of bounds
+    question_index = 5
     answer = 2
 
     returned_answers = await db_instance.update_result(
@@ -270,7 +262,6 @@ async def test_update_result_invalid_index(db_instance):
 
 @pytest.mark.asyncio
 async def test_get_answers(db_instance):
-    # Lines 112-115: Testing get_answers method
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -293,7 +284,6 @@ async def test_get_answers(db_instance):
 
 @pytest.mark.asyncio
 async def test_get_status(db_instance):
-    # Lines 118-121: Testing get_status method
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -316,7 +306,6 @@ async def test_get_status(db_instance):
 
 @pytest.mark.asyncio
 async def test_complete_test(db_instance):
-    # Lines 124-132: Testing complete_test method
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
@@ -349,7 +338,6 @@ async def test_complete_test(db_instance):
 
 @pytest.mark.asyncio
 async def test_get_result(db_instance):
-    # Lines 135-136: Testing get_result method
     mock_results_collection = MagicMock()
     db_instance.db.__getitem__.return_value = mock_results_collection
 
