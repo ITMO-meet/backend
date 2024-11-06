@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.utils.db import db_instance
-from app.models.test import StartTestRequest
+from app.models.quiz import StartTestRequest
 
 router = APIRouter()
 
@@ -20,7 +20,13 @@ async def get_test_info(test_id: str):
 
 @router.post("/{test_id}/start")
 async def start_test(test_id: str, payload: StartTestRequest):
-    result_id = await db_instance.create_result(payload.user_id, test_id)
+    test = await db_instance.get_test(test_id)
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    result_id = await db_instance.create_result(
+        payload.user_id, test_id, len(test["question_ids"])
+    )
 
     if not result_id:
         raise HTTPException(status_code=500, detail="Error creating test results")

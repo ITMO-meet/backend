@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from app.api import tags
-from app.api import tests
-from app.api import test_results
+from app.api import quizes
+from app.api import quizes_results
 
 app = FastAPI()
 app.include_router(tags.router)
-app.include_router(tests.router, prefix="/tests")
-app.include_router(test_results.router, prefix="/results")
+app.include_router(quizes.router, prefix="/tests")
+app.include_router(quizes_results.router, prefix="/results")
 
 
 def main():

@@ -45,4 +45,5 @@ class StartTestRequest(BaseModel):
 
 
 class AnswerRequest(BaseModel):
+    question_index: int
     answer: int
