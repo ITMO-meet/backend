@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, File, UploadFile
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
 from bson import ObjectId
 from datetime import timedelta
+from uuid import uuid4
 
 router = APIRouter()
 
@@ -176,3 +177,27 @@ async def update_relationship_preferences(payload: TagSelectionModel):
         raise HTTPException(status_code=404, detail="User not found or preferences not updated")
 
     return {"message": "relationship preferences updated successfully"}
+
+
+router = APIRouter()
+
+@router.put("/update_logo/{isu}")
+async def update_logo(isu: int, file: UploadFile = File(...)):
+    user_collection = db_instance.get_collection("users")
+
+    file_extension = file.filename.split(".")[-1]
+    filename = f"logos/{isu}_{uuid4()}.{file_extension}"
+    file_url = db_instance.upload_file_to_minio(
+        file.file,
+        filename,
+        content_type=file.content_type or "application/octet-stream",
+    )
+
+    update_result = await user_collection.update_one(
+        {"isu": isu}, {"$set": {"photos.logo": file_url}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or logo not updated")
+
+    return {"message": "Logo updated successfully", "logo_url": file_url}
