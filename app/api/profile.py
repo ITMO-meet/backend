@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
-from app.models.user import GenderPreferencesSelectionModel
+from app.models.user import GenderPreferencesSelectionModel, UsernameSelectionModel
 from bson import ObjectId
 from datetime import timedelta
 from uuid import uuid4
@@ -78,11 +78,12 @@ async def update_bio(isu: int, bio: str):
     return {"message": "bio updated successfully"}
 
 
-@router.put("/update_username/{isu}")
-async def update_username(isu: int, username: str):
+@router.put("/update_username")
+async def update_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"username": username}}
+        {"isu": payload.isu},
+        {"$set": {"username": payload.username}}
     )
 
     if update_result.modified_count == 0:
