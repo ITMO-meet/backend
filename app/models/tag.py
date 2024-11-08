@@ -21,6 +21,3 @@ class TagSelectionModel(BaseModel):
     tags: List[str]
 
 
-class TagSelectionModel(BaseModel):
-    isu: int
-    tags: List[str]

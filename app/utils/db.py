@@ -35,34 +35,6 @@ class Database:
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
 
-    def upload_file_to_minio(self, data, filename, content_type):
-        self.minio_instance.put_object(
-            self.minio_bucket_name,
-            filename,
-            data,
-            length=-1,
-            part_size=10 * 1024 * 1024,
-            content_type=content_type,
-        )
-        return f"{self.minio_bucket_name}/{filename}"
-
-        minio_endpoint = os.getenv("MINIO_ENDPOINT")
-        minio_access_key = os.getenv("MINIO_ACCESS_KEY")
-        minio_secret_key = os.getenv("MINIO_SECRET_KEY")
-        self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
-        minio_use_ssl = os.getenv("MINIO_USE_SSL", "False").lower() == "true"
-
-        if not all(
-            [minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]
-        ):
-            raise ValueError("MINIO not found in env")
-
-        self.minio_instance = Minio(
-            minio_endpoint, minio_access_key, minio_secret_key, secure=minio_use_ssl
-        )
-
-        if not self.minio_instance.bucket_exists(self.minio_bucket_name):
-            self.minio_instance.make_bucket(self.minio_bucket_name)
 
     def upload_file_to_minio(self, data, filename, content_type):
         self.minio_instance.put_object(
