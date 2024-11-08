@@ -104,3 +104,13 @@ async def update_weight(isu: int, weight: float):
         raise HTTPException(status_code=404, detail="User not found or weight not updated")
     
     return {"messahe": "weight updated successfully"}
+
+@router.put("/update_zodiac/{isu}")
+async def update_zodiac_sign(isu: int, zodiac_sign: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"person_params.zodiac_sign": zodiac_sign}})
+    
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or zodiac sign not updated")
+    
+    return {"message": "Zodiac sign updated successfully"}
