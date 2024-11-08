@@ -1,9 +1,6 @@
 import pytest
-
 from unittest.mock import AsyncMock, MagicMock
-
 from app.utils.db import Database
-
 from bson import ObjectId
 
 
@@ -30,9 +27,6 @@ def test_get_collection(db_instance):
     assert collection.name == collection_name, "Collection name mismatch"
 
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock
-from bson import ObjectId  # You'll need this for ObjectId
 
 @pytest.mark.asyncio
 async def test_get_available_tags():
