@@ -52,3 +52,16 @@ async def get_profile(isu: int):
     }
     
     return {"profile": profile_data}
+
+@router.put("/update_bio/{isu}")
+async def update_bio(isu: int, bio: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one(
+        {"isu": isu},
+        {"$set": {"bio": bio}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or bio not updated")
+    
+    return {"message": "bio updated successfully"}
