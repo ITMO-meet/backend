@@ -179,8 +179,6 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     return {"message": "relationship preferences updated successfully"}
 
 
-router = APIRouter()
-
 @router.put("/update_logo/{isu}")
 async def update_logo(isu: int, file: UploadFile = File(...)):
     user_collection = db_instance.get_collection("users")
@@ -200,4 +198,35 @@ async def update_logo(isu: int, file: UploadFile = File(...)):
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or logo not updated")
 
-    return {"message": "Logo updated successfully", "logo_url": file_url}
+    return {"message": "logo updated successfully", "logo_url": file_url}
+
+@router.put("/update_carousel_photo/{isu}")
+async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFile = File(...)):
+    user_collection = db_instance.get_collection("users")
+
+    db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, old_photo_url)
+
+    file_extension = new_file.filename.split(".")[-1]
+    new_filename = f"carousel/{isu}_{uuid4()}.{file_extension}"
+    new_file_url = db_instance.upload_file_to_minio(
+        new_file.file,
+        new_filename,
+        content_type=new_file.content_type or "application/octet-stream",
+    )
+    user = await user_collection.find_one({"isu": isu})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    carousel = user["photos"].get("carousel", [])
+    if old_photo_url not in carousel:
+        raise HTTPException(status_code=404, detail="Photo not found in carousel")
+
+    carousel = [new_file_url if photo == old_photo_url else photo for photo in carousel]
+    update_result = await user_collection.update_one(
+        {"isu": isu}, {"$set": {"photos.carousel": carousel}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Photo not updated in carousel")
+
+    return {"message": "carousel photo updated successfully", "new_photo_url": new_file_url}
