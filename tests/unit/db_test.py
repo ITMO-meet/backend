@@ -30,6 +30,10 @@ def test_get_collection(db_instance):
     assert collection.name == collection_name, "Collection name mismatch"
 
 
+import pytest
+from unittest.mock import MagicMock, AsyncMock
+from bson import ObjectId  # You'll need this for ObjectId
+
 @pytest.mark.asyncio
 async def test_get_available_tags():
     db_instance = Database()
@@ -39,9 +43,9 @@ async def test_get_available_tags():
     db_instance.db.__getitem__.return_value = mock_tags_collection
 
     fake_tags = [
-        {"name": "Tag1"},
-        {"name": "Tag2"},
-        {"name": "Tag3"},
+        {"_id": ObjectId("507f1f77bcf86cd799439011"), "name": "Tag1"},
+        {"_id": ObjectId("507f1f77bcf86cd799439012"), "name": "Tag2"},
+        {"_id": ObjectId("507f1f77bcf86cd799439013"), "name": "Tag3"},
     ]
 
     mock_cursor = MagicMock()
@@ -50,11 +54,14 @@ async def test_get_available_tags():
 
     tags = await db_instance.get_available_tags()
 
-    assert tags == [
-        "Tag1",
-        "Tag2",
-        "Tag3",
-    ], "Tags returned do not match expected values"
+    expected_tags = [
+        {"id": "507f1f77bcf86cd799439011", "name": "Tag1"},
+        {"id": "507f1f77bcf86cd799439012", "name": "Tag2"},
+        {"id": "507f1f77bcf86cd799439013", "name": "Tag3"},
+    ]
+
+    assert tags == expected_tags, "Tags returned do not match expected values"
+
 
 
 @pytest.mark.asyncio
