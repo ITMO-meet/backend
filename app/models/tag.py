@@ -7,7 +7,7 @@ from .pyObject import PyObjectId
 class TagModel(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
     name: str
-    is_special: int  # 0 user tags, 1 - preference tags
+    is_special: int # 0 user tags, 1 - preference tags  # 0 user tags, 1 - preference tags
     description: str
 
     class Config:
@@ -19,3 +19,5 @@ class TagModel(BaseModel):
 class TagSelectionModel(BaseModel):
     isu: int
     tags: List[str]
+
+
