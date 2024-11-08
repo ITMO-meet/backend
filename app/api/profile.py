@@ -75,6 +75,32 @@ async def update_username(isu: int, username: str):
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="User not fount or username not updated")
+        raise HTTPException(status_code=404, detail="User not found or username not updated")
     
     return {"messahe": "username updated successfully"}
+
+@router.put("/update_height/{isu}")
+async def update_height(isu: int, height: float):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one(
+        {"isu": isu},
+        {"$set": {"person_params.height": height}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or height not updated")
+    
+    return {"messahe": "height updated successfully"}
+
+@router.put("/update_height/{isu}")
+async def update_weight(isu: int, weight: float):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one(
+        {"isu": isu},
+        {"$set": {"person_params.weight": weight}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or weight not updated")
+    
+    return {"messahe": "weight updated successfully"}
