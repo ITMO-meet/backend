@@ -16,13 +16,21 @@ permissions:
   pull-requests: write
   checks: write
 
-jobs:
-  lint:
-    name: ${{ github.event_name == 'pull_request' && 'Linting' || 'lint' }}
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_ACTIONS_CHECK_NAME: lint
+env:
+  GITHUB_ACTIONS_CHECK_NAME: ""
+  MONGO_URI: ${{ secrets.MONGO_URI }}
+  MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+  MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+  MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+  MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
+  MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
 
+jobs:
+  setup-python:
+    name: Set up Python and install dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      installed: ${{ steps.setup-completed.outcome }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,12 +41,25 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
+        id: setup-completed
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install -r requirements.txt
+          echo "Dependencies installed"
+
+  lint:
+    name: ${{ github.event_name == 'pull_request' && 'Linting' || 'lint' }}
+    runs-on: ubuntu-latest
+    needs: setup-python
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Run Ruff linter
-        run: ruff check . --fix
+        run: |
+          pip install ruff
+          ruff check . --fix
 
       - name: Check if there are changes after linting
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
@@ -46,61 +67,23 @@ jobs:
   test:
     name: ${{ github.event_name == 'pull_request' && 'unit_tests' || 'Unit Tests' }}
     runs-on: ubuntu-latest
-    env:
-      GITHUB_ACTIONS_CHECK_NAME: unit_tests
-      MONGO_URI: ${{ secrets.MONGO_URI }}
-      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
-      MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
+    needs: setup-python
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
-
       - name: Run tests
-        run: |
-          pytest
+        run: pytest
 
   coverage:
     name: ${{ github.event_name == 'pull_request' && 'code_coverage' || 'Coverage' }}
     runs-on: ubuntu-latest
-    needs: test
-    env:
-      GITHUB_ACTIONS_CHECK_NAME: code_coverage
-      MONGO_URI: ${{ secrets.MONGO_URI }}
-      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
-      MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
+    needs: [setup-python, test]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
 
       - name: Run coverage
         run: |
