@@ -91,7 +91,7 @@ async def update_username(payload: UsernameSelectionModel):
             status_code=404, detail="User not found or username not updated"
         )
 
-    return {"messahe": "username updated successfully"}
+    return {"message": "username updated successfully"}
 
 
 @router.put("/update_height/{isu}")
@@ -106,7 +106,7 @@ async def update_height(isu: int, height: float):
             status_code=404, detail="User not found or height not updated"
         )
 
-    return {"messahe": "height updated successfully"}
+    return {"message": "height updated successfully"}
 
 
 @router.put("/update_weight/{isu}")
@@ -121,7 +121,7 @@ async def update_weight(isu: int, weight: float):
             status_code=404, detail="User not found or weight not updated"
         )
 
-    return {"messahe": "weight updated successfully"}
+    return {"message": "weight updated successfully"}
 
 
 @router.put("/update_zodiac/{isu}")
