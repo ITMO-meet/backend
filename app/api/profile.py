@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
+from app.models.user import GenderPreferencesSelectionModel
 from bson import ObjectId
 from datetime import timedelta
 from uuid import uuid4
@@ -255,3 +256,17 @@ async def delete_carousel_photo(isu: int, photo_url: str):
         raise HTTPException(status_code=404, detail="Photo not removed from carousel")
 
     return {"message": "carousel photo deleted successfully"}
+
+@router.put("/update_gender_preference")
+async def update_gender_preference(payload: GenderPreferencesSelectionModel):
+    user_collection = db_instance.get_collection("users")
+
+    update_result = await user_collection.update_one(
+        {"isu": payload.isu},
+        {"$set": {"preferences.gender_preference": payload.gender_preference}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or gender preference not updated")
+
+    return {"message": "gender preference updated successfully"}
