@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.utils.db import db_instance
+from app.models.tag import TagSelectionModel
 from bson import ObjectId
 from datetime import timedelta
 
@@ -133,3 +134,4 @@ async def update_zodiac_sign(isu: int, zodiac_sign: str):
         )
 
     return {"message": "Zodiac sign updated successfully"}
+
