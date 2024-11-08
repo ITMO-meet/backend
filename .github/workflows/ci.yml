@@ -51,7 +51,6 @@ jobs:
     name: Linting
     runs-on: ubuntu-latest
     needs: setup-python
-    if: contains(github.ref, 'feat/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -69,7 +68,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: setup-python
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.ref != 'refs/heads/feat/*' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -82,7 +81,7 @@ jobs:
     name: Coverage
     runs-on: ubuntu-latest
     needs: [setup-python, test]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.ref != 'refs/heads/feat/*' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -113,7 +112,6 @@ jobs:
     name: PR checks for merge
     runs-on: ubuntu-latest
     needs: [lint, test, coverage]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Verify PR checks
