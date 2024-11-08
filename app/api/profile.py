@@ -135,3 +135,23 @@ async def update_zodiac_sign(isu: int, zodiac_sign: str):
 
     return {"message": "Zodiac sign updated successfully"}
 
+@router.put("/update_tags")
+async def update_tags(payload: TagSelectionModel):
+    user_collection = db_instance.get_collection("users")
+    tags_collection = db_instance.get_collection("tags")
+
+    tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
+    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
+
+    if len(existing_tags) != len(tag_ids):
+        raise HTTPException(status_code=400, detail="Some tags do not exist")
+
+    update_result = await user_collection.update_one(
+        {"isu": payload.isu},
+        {"$set": {"tags": tag_ids}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or tags not updated")
+
+    return {"message": "tags updated successfully"}
