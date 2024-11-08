@@ -48,9 +48,10 @@ jobs:
           echo "Dependencies installed"
 
   lint:
-    name: ${{ github.event_name == 'pull_request' && 'Linting' || 'lint' }}
+    name: Linting
     runs-on: ubuntu-latest
     needs: setup-python
+    if: contains(github.ref, 'feat/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -65,9 +66,10 @@ jobs:
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
 
   test:
-    name: ${{ github.event_name == 'pull_request' && 'unit_tests' || 'Unit Tests' }}
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: setup-python
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -77,9 +79,10 @@ jobs:
         run: pytest
 
   coverage:
-    name: ${{ github.event_name == 'pull_request' && 'code_coverage' || 'Coverage' }}
+    name: Coverage
     runs-on: ubuntu-latest
     needs: [setup-python, test]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -110,6 +113,7 @@ jobs:
     name: PR checks for merge
     runs-on: ubuntu-latest
     needs: [lint, test, coverage]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Verify PR checks
