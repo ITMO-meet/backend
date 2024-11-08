@@ -155,3 +155,24 @@ async def update_tags(payload: TagSelectionModel):
         raise HTTPException(status_code=404, detail="User not found or tags not updated")
 
     return {"message": "tags updated successfully"}
+
+@router.put("/update_relationship_preferences")
+async def update_relationship_preferences(payload: TagSelectionModel):
+    user_collection = db_instance.get_collection("users")
+    tags_collection = db_instance.get_collection("tags")
+
+    tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
+    special_tags = await tags_collection.find({"_id": {"$in": tag_ids}, "is_special": 1}).to_list(length=None)
+
+    if len(special_tags) != len(tag_ids):
+        raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
+
+    update_result = await user_collection.update_one(
+        {"isu": payload.isu},
+        {"$set": {"preferences.relationship_preference": tag_ids}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or preferences not updated")
+
+    return {"message": "relationship preferences updated successfully"}
