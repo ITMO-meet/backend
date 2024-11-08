@@ -52,6 +52,11 @@ class Database:
     async def get_available_tags(self):
         tags = await self.db["tags"].find().to_list(length=None)
         return [tag["name"] for tag in tags]
+    
+    async def get_special_tags(self):
+        special_tags = await self.db["tags"].find({"is_special": 1}).to_list(length=None)
+        return [{"id": str(tag["_id"]), "name": tag["name"]} for tag in special_tags]
+
 
     async def add_test_tags(self, tags: List[Dict[str, Any]]):
         result = await self.db["tags"].insert_many(tags)
