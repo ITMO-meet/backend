@@ -2,7 +2,11 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
-from app.models.user import UsernameSelectionModel, GenderPreferencesSelectionModel, RelationshipsPreferencesSelectionModel
+from app.models.user import (
+    UsernameSelectionModel,
+    GenderPreferencesSelectionModel,
+    RelationshipsPreferencesSelectionModel,
+)
 from app.models.profileDetails import ProfileDetailsModel
 from uuid import uuid4
 from typing import List
@@ -15,8 +19,7 @@ async def select_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
 
     update_result = await user_collection.update_one(
-        {"isu": payload.isu},
-        {"$set": {"username": payload.username}}
+        {"isu": payload.isu}, {"$set": {"username": payload.username}}
     )
 
     if update_result.modified_count == 0:
@@ -26,13 +29,14 @@ async def select_username(payload: UsernameSelectionModel):
 
     return {"message": "Username updated successfully"}
 
+
 @router.post("/register/select_preferences")
 async def select_preferences(payload: GenderPreferencesSelectionModel):
     user_collection = db_instance.get_collection("users")
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.gender_preference": payload.gender_preference}}
+        {"$set": {"preferences.gender_preference": payload.gender_preference}},
     )
 
     if update_result.modified_count == 0:
@@ -41,6 +45,7 @@ async def select_preferences(payload: GenderPreferencesSelectionModel):
         )
 
     return {"message": "Gender preference updated successfully"}
+
 
 @router.post("/register/select_tags")
 async def select_tags(payload: TagSelectionModel):
@@ -165,16 +170,19 @@ async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
             detail="Invalid relationship preference tags provided",
         )
 
-    selected_tag_ids = [str(tag["_id"]) for tag in special_tags if tag["name"] in user_selected_tags]
+    selected_tag_ids = [
+        str(tag["_id"]) for tag in special_tags if tag["name"] in user_selected_tags
+    ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.relationship_preference": selected_tag_ids}}
+        {"$set": {"preferences.relationship_preference": selected_tag_ids}},
     )
 
     if update_result.modified_count == 0:
         raise HTTPException(
-            status_code=404, detail="User not found or relationship preference not updated"
+            status_code=404,
+            detail="User not found or relationship preference not updated",
         )
 
     return {"message": "Relationship preference updated successfully"}

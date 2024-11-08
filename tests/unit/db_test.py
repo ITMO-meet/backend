@@ -14,10 +14,8 @@ def db_instance():
     return db
 
 
-
 def test_db_connection(db_instance):
     assert db_instance.client is not None, "DB client is not initialized"
-
 
 
 def test_get_collection(db_instance):
@@ -30,7 +28,6 @@ def test_get_collection(db_instance):
     collection = db_instance.get_collection(collection_name)
 
     assert collection.name == collection_name, "Collection name mismatch"
-
 
 
 @pytest.mark.asyncio
