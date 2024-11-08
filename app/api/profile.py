@@ -65,3 +65,16 @@ async def update_bio(isu: int, bio: str):
         raise HTTPException(status_code=404, detail="User not found or bio not updated")
     
     return {"message": "bio updated successfully"}
+
+@router.put("/update_username/{isu}")
+async def update_username(isu: int, username: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one(
+        {"isu": isu},
+        {"$set": {"username": username}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not fount or username not updated")
+    
+    return {"messahe": "username updated successfully"}
