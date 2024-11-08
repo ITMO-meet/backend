@@ -23,15 +23,12 @@ async def get_profile(isu: int):
         for pref_id in user["preferences"].get("relationship_preference", [])
     ]
 
-    user_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(
-        length=None
-    )
-    user_preferences = await tags_collection.find(
-        {"_id": {"$in": preference_ids}}
-    ).to_list(length=None)
+    user_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
+    user_preferences = await tags_collection.find({"_id": {"$in": preference_ids}}).to_list(length=None)
 
     tags = [tag["name"] for tag in user_tags]
-    preferences = [pref["name"] for pref in user_preferences]
+    relationship_preferences = [pref["name"] for pref in user_preferences]
+    gender_preference = user["preferences"].get("gender_preference")
 
     logo_url = None
     if "logo" in user["photos"]:
@@ -52,7 +49,10 @@ async def get_profile(isu: int):
         "username": user["username"],
         "bio": user.get("bio", ""),
         "tags": tags,
-        "preferences": preferences,
+        "preferences": {
+            "relationship_preference": relationship_preferences,
+            "gender_preference": gender_preference
+        },
         "photos": {"logo": logo_url, "carousel": carousel_urls},
         "person_params": {
             "zodiac_sign": user["person_params"].get("zodiac_sign"),
