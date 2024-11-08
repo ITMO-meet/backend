@@ -109,7 +109,7 @@ async def update_height(isu: int, height: float):
     return {"messahe": "height updated successfully"}
 
 
-@router.put("/update_height/{isu}")
+@router.put("/update_weight/{isu}")
 async def update_weight(isu: int, weight: float):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
