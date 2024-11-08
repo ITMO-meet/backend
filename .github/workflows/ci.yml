@@ -51,6 +51,7 @@ jobs:
     name: Linting
     runs-on: ubuntu-latest
     needs: setup-python
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -65,10 +66,10 @@ jobs:
         run: git diff --exit-code || (echo "Linting issues detected!" && exit 1)
 
   test:
-    name: Unit Tests
+    name: unit_tests
     runs-on: ubuntu-latest
     needs: setup-python
-    if: github.ref != 'refs/heads/feat/*' || github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -78,10 +79,10 @@ jobs:
         run: pytest
 
   coverage:
-    name: Coverage
+    name: code_coverage
     runs-on: ubuntu-latest
     needs: [setup-python, test]
-    if: github.ref != 'refs/heads/feat/*' || github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout code
@@ -112,8 +113,8 @@ jobs:
     name: PR checks for merge
     runs-on: ubuntu-latest
     needs: [lint, test, coverage]
+    if: github.event.pull_request.merged == false
 
     steps:
       - name: Verify PR checks
-        if: github.event.pull_request.merged == false
         run: echo "PR checks passed, ready to merge."
