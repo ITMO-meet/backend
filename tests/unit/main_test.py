@@ -1,12 +1,11 @@
 import pytest
 import rollbar
 
-from app import main, setup_rollbar
+from app.main import app
+from app import setup_rollbar
+from fastapi.testclient import TestClient
 
-
-def test_main():
-    res = main.main()
-    assert res == "Hello, world!"
+client = TestClient(app)
 
 
 def test_rollbar():

@@ -1,7 +1,17 @@
+from fastapi import FastAPI
+from app.api import tags
+from app.api import quizes
+from app.api import quizes_results
+
+app = FastAPI()
+app.include_router(tags.router)
+app.include_router(quizes.router, prefix="/tests")
+app.include_router(quizes_results.router, prefix="/results")
+
+
 def main():
     return "Hello, world!"
 
 
-if __name__ == "__main__":  # pragma: no cover
-    data = main()
-    print(data)
+if __name__ == "__main__":
+    main()
