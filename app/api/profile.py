@@ -230,3 +230,28 @@ async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFi
         raise HTTPException(status_code=404, detail="Photo not updated in carousel")
 
     return {"message": "carousel photo updated successfully", "new_photo_url": new_file_url}
+
+@router.delete("/delete_carousel_photo/{isu}")
+async def delete_carousel_photo(isu: int, photo_url: str):
+    user_collection = db_instance.get_collection("users")
+
+    try:
+        db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, photo_url)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to delete photo from storage")
+    user = await user_collection.find_one({"isu": isu})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    carousel = user["photos"].get("carousel", [])
+    if photo_url not in carousel:
+        raise HTTPException(status_code=404, detail="Photo not found in carousel")
+
+    carousel = [photo for photo in carousel if photo != photo_url]
+
+    update_result = await user_collection.update_one(
+        {"isu": isu}, {"$set": {"photos.carousel": carousel}}
+    )
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Photo not removed from carousel")
+
+    return {"message": "carousel photo deleted successfully"}
