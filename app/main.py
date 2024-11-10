@@ -5,9 +5,10 @@ from app.api import quizes_results
 from app.api import auth
 from app.api import register
 from app.api import profile
-
+from app import setup_rollbar
 
 app = FastAPI()
+setup_rollbar.init_rollbar()
 app.include_router(tags.router)
 app.include_router(quizes.router, prefix="/tests")
 app.include_router(quizes_results.router, prefix="/results")

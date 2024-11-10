@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from minio import Minio
 from bson import ObjectId
 
+from app.setup_rollbar import rollbar_handler
+
 load_dotenv()
 
 
@@ -35,6 +37,7 @@ class Database:
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
 
+    @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):
         self.minio_instance.put_object(
             self.minio_bucket_name,
@@ -46,22 +49,26 @@ class Database:
         )
         return f"{self.minio_bucket_name}/{filename}"
 
+    @rollbar_handler
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
+    @rollbar_handler
     async def get_available_tags(self):
         tags = await self.db["tags"].find().to_list(length=None)
         return [{"id": str(tag["_id"]), "name": tag["name"]} for tag in tags]
     
+    @rollbar_handler
     async def get_special_tags(self):
         special_tags = await self.db["tags"].find({"is_special": 1}).to_list(length=None)
         return [{"id": str(tag["_id"]), "name": tag["name"]} for tag in special_tags]
 
-
+    @rollbar_handler
     async def add_test_tags(self, tags: List[Dict[str, Any]]):
         result = await self.db["tags"].insert_many(tags)
         return [str(tag_id) for tag_id in result.inserted_ids]
 
+    @rollbar_handler
     async def create_test(
         self, name: str, description: str, question_ids: List[ObjectId]
     ):
@@ -73,19 +80,22 @@ class Database:
         result = await self.db["tests"].insert_one(test_data)
         return str(result.inserted_id)
 
+    @rollbar_handler
     async def get_test(self, test_id: str):
         return await self.db["tests"].find_one({"_id": ObjectId(test_id)})
 
+    @rollbar_handler
     async def create_question(self, description: str):
         question_data = {"description": description}
         result = await self.db["questions"].insert_one(question_data)
         return str(result.inserted_id)
-
+    @rollbar_handler
     async def get_question_by_id(self, question_id: str):
         question = await self.db["questions"].find_one({"_id": ObjectId(question_id)})
         return question
 
     # review
+    @rollbar_handler
     async def create_result(self, user_id: int, test_id: str, questions_count: int):
         result_data = {
             "user_id": user_id,
@@ -97,6 +107,7 @@ class Database:
         result = await self.db["results"].insert_one(result_data)
         return str(result.inserted_id)
 
+    @rollbar_handler
     async def update_result(self, result_id: str, question_index: int, answer: int):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
 
@@ -113,18 +124,21 @@ class Database:
         )
         return answers
 
+    @rollbar_handler
     async def get_answers(self, result_id: str):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         if not result:
             return None
         return result["answers"]
-
+    
+    @rollbar_handler
     async def get_status(self, result_id: str):
         status = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         if not status:
             return None
         return status["completed"]
 
+    @rollbar_handler
     async def complete_test(self, result_id: str):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         if not result:
@@ -136,6 +150,7 @@ class Database:
         )
         return score
 
+    @rollbar_handler
     async def get_result(self, result_id: str):
         result = await self.db["results"].find_one({"_id": ObjectId(result_id)})
         return result
