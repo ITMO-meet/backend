@@ -18,7 +18,8 @@ def rollbar_handler(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            rollbar.report_exc_info()
+            if os.getenv("TEST_ENV") != "true":
+                rollbar.report_exc_info()      
             raise e
     return wrapper
 
