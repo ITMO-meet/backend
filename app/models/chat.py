@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 import datetime
-from typing import List
 
 class CreateChat(BaseModel):
     isu_1: int
@@ -18,6 +17,3 @@ class Message(BaseModel):
     receiver_id: int
     text: str
     timestamp: datetime.datetime
-
-class MessagesResponse(BaseModel):
-    messages: List[Message]

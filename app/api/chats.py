@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
-from app.models.chat import CreateChat, SendMessage, MessagesResponse
+from app.models.chat import CreateChat, SendMessage
 
 router = APIRouter()
 
@@ -37,7 +37,7 @@ async def send_message(payload: SendMessage):
     )
     return {"message": "message sent", "message_id": message_id}
 
-@router.get("/get_messages/{chat_id}", response_model=MessagesResponse)
+@router.get("/get_messages/{chat_id}")
 @rollbar_handler
 async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)):
     messages = await db_instance.get_messages(chat_id=chat_id, limit=limit, offset=offset)
