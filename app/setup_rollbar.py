@@ -18,10 +18,20 @@ def rollbar_handler(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            if os.getenv("TEST_ENV") != "true":
-                rollbar.report_exc_info()      
+            rollbar.report_exc_info()      
             raise e
     return wrapper
+
+def rollbar_sync_handler(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            rollbar.report_exc_info()
+            raise e
+    return wrapper
+
 
 # def main():
 #     raise rollbar.ApiError("No token =/")

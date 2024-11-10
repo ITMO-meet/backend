@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from minio import Minio
 from bson import ObjectId
 
-from app.setup_rollbar import rollbar_handler
+from app.setup_rollbar import rollbar_handler, rollbar_sync_handler
 
 load_dotenv()
 
@@ -49,7 +49,7 @@ class Database:
         )
         return f"{self.minio_bucket_name}/{filename}"
 
-    @rollbar_handler
+    @rollbar_sync_handler
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
