@@ -37,7 +37,7 @@ class Database:
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
 
-    @rollbar_handler
+    @rollbar_sync_handler
     def upload_file_to_minio(self, data, filename, content_type):
         self.minio_instance.put_object(
             self.minio_bucket_name,
