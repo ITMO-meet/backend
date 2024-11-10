@@ -176,6 +176,37 @@ class Database:
             {"$or": [{"isu_1": isu}, {"isu_2": isu}]}
         ).to_list(length=None)
         return [{"chat_id": chat["chat_id"]} for chat in result]
+    
+    @rollbar_handler
+    async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
+        message_data = {
+            "chat_id": chat_id,
+            "sender_id": sender_id,
+            "receiver_id": receiver_id,
+            "text": text,
+            "timestamp": datetime.datetime.now(datetime.timezone.utc),
+        }
+
+        result = await self.db["messages"].insert_one(message_data)
+        return str(result.inserted_id)
+    
+    @rollbar_handler
+    async def get_messages(self, chat_id: str, limit: int = 5, offset: int = 0):
+        messages = await self.db["messages"].find({"chat_id": chat_id})\
+            .sort("sent_at", -1)\
+            .skip(offset)\
+            .limit(limit)\
+            .to_list(length=None)
+        return [
+            {
+                "message_id": str(message["_id"]),
+                "sender_id": message["sender_id"],
+                "receiver_id": message["receiver_id"],
+                "text": message["text"],
+                "timestamp": message["timestamp"]
+            }
+            for message in messages
+        ]
 
 
 
