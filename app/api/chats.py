@@ -26,7 +26,7 @@ async def get_chats_for_user(isu: int):
     
     return {"chats": chats}
 
-@router.post("/send_message", response_model=dict)
+@router.post("/send_message")
 @rollbar_handler
 async def send_message(payload: SendMessage):
     message_id = await db_instance.create_message(
