@@ -1,11 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from app.utils.db import db_instance
 from app.models.quiz import StartTestRequest
+from app.setup_rollbar import rollbar_handler
 
 router = APIRouter()
 
 
 @router.get("/{test_id}")
+@rollbar_handler
 async def get_test_info(test_id: str):
     test = await db_instance.get_test(test_id)
 
@@ -19,6 +21,7 @@ async def get_test_info(test_id: str):
 
 
 @router.post("/{test_id}/start")
+@rollbar_handler
 async def start_test(test_id: str, payload: StartTestRequest):
     test = await db_instance.get_test(test_id)
     if not test:
@@ -34,6 +37,7 @@ async def start_test(test_id: str, payload: StartTestRequest):
 
 
 @router.get("/{test_id}/question/{question_number}")
+@rollbar_handler
 async def get_question(test_id: str, question_number: int):
     test = await db_instance.get_test(test_id)
     if not test:

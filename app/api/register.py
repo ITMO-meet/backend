@@ -8,6 +8,7 @@ from app.models.user import (
     RelationshipsPreferencesSelectionModel,
 )
 from app.models.profileDetails import ProfileDetailsModel
+from app.setup_rollbar import rollbar_handler
 from uuid import uuid4
 from typing import List
 
@@ -15,6 +16,7 @@ router = APIRouter()
 
 
 @router.post("/register/select_username")
+@rollbar_handler
 async def select_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
 
@@ -31,6 +33,7 @@ async def select_username(payload: UsernameSelectionModel):
 
 
 @router.post("/register/select_preferences")
+@rollbar_handler
 async def select_preferences(payload: GenderPreferencesSelectionModel):
     user_collection = db_instance.get_collection("users")
 
@@ -48,6 +51,7 @@ async def select_preferences(payload: GenderPreferencesSelectionModel):
 
 
 @router.post("/register/select_tags")
+@rollbar_handler
 async def select_tags(payload: TagSelectionModel):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")
@@ -73,6 +77,7 @@ async def select_tags(payload: TagSelectionModel):
 
 
 @router.post("/register/upload_logo")
+@rollbar_handler
 async def upload_logo(isu: int, file: UploadFile = File(...)):
     user_collection = db_instance.get_collection("users")
 
@@ -97,6 +102,7 @@ async def upload_logo(isu: int, file: UploadFile = File(...)):
 
 
 @router.post("/register/upload_carousel")
+@rollbar_handler
 async def upload_carousel(isu: int, files: List[UploadFile] = File(...)):
     user_collection = db_instance.get_collection("users")
 
@@ -130,6 +136,7 @@ async def upload_carousel(isu: int, files: List[UploadFile] = File(...)):
 
 
 @router.post("/register/profile_details")
+@rollbar_handler
 async def add_profile_details(payload: ProfileDetailsModel):
     user_collection = db_instance.get_collection("users")
 
@@ -156,6 +163,7 @@ async def add_profile_details(payload: ProfileDetailsModel):
 
 
 @router.post("/register/select_relationship")
+@rollbar_handler
 async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")

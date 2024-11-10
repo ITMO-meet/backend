@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 
 from app.models.user import UserModel
 from app.utils.db import db_instance
+from app.setup_rollbar import rollbar_handler
 
 router = APIRouter()
 
@@ -31,6 +32,7 @@ def get_code_challenge(code_verifier: str):
 
 
 @router.get("/login_with_password")
+@rollbar_handler
 async def login_with_password(username: str, password: str):
     code_verifier = generate_code_verifier()
     code_challenge = get_code_challenge(code_verifier)
@@ -126,6 +128,7 @@ async def login_with_password(username: str, password: str):
 
 
 @router.get("/dashboard")
+@rollbar_handler
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
 

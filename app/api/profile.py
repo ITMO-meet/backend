@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, File, UploadFile
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
 from app.models.user import GenderPreferencesSelectionModel, UsernameSelectionModel
+from app.setup_rollbar import rollbar_handler
 from bson import ObjectId
 from datetime import timedelta
 from uuid import uuid4
@@ -10,6 +11,7 @@ router = APIRouter()
 
 
 @router.get("/get_profile/{isu}")
+@rollbar_handler
 async def get_profile(isu: int):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")
@@ -66,6 +68,7 @@ async def get_profile(isu: int):
 
 
 @router.put("/update_bio/{isu}")
+@rollbar_handler
 async def update_bio(isu: int, bio: str):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
@@ -79,6 +82,7 @@ async def update_bio(isu: int, bio: str):
 
 
 @router.put("/update_username")
+@rollbar_handler
 async def update_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
@@ -95,6 +99,7 @@ async def update_username(payload: UsernameSelectionModel):
 
 
 @router.put("/update_height/{isu}")
+@rollbar_handler
 async def update_height(isu: int, height: float):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
@@ -110,6 +115,7 @@ async def update_height(isu: int, height: float):
 
 
 @router.put("/update_weight/{isu}")
+@rollbar_handler
 async def update_weight(isu: int, weight: float):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
@@ -125,6 +131,7 @@ async def update_weight(isu: int, weight: float):
 
 
 @router.put("/update_zodiac/{isu}")
+@rollbar_handler
 async def update_zodiac_sign(isu: int, zodiac_sign: str):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
@@ -139,6 +146,7 @@ async def update_zodiac_sign(isu: int, zodiac_sign: str):
     return {"message": "Zodiac sign updated successfully"}
 
 @router.put("/update_tags")
+@rollbar_handler
 async def update_tags(payload: TagSelectionModel):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")
@@ -160,6 +168,7 @@ async def update_tags(payload: TagSelectionModel):
     return {"message": "tags updated successfully"}
 
 @router.put("/update_relationship_preferences")
+@rollbar_handler
 async def update_relationship_preferences(payload: TagSelectionModel):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")
@@ -182,6 +191,7 @@ async def update_relationship_preferences(payload: TagSelectionModel):
 
 
 @router.put("/update_logo/{isu}")
+@rollbar_handler
 async def update_logo(isu: int, file: UploadFile = File(...)):
     user_collection = db_instance.get_collection("users")
 
@@ -203,6 +213,7 @@ async def update_logo(isu: int, file: UploadFile = File(...)):
     return {"message": "logo updated successfully", "logo_url": file_url}
 
 @router.put("/update_carousel_photo/{isu}")
+@rollbar_handler
 async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFile = File(...)):
     user_collection = db_instance.get_collection("users")
 
@@ -234,6 +245,7 @@ async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFi
     return {"message": "carousel photo updated successfully", "new_photo_url": new_file_url}
 
 @router.delete("/delete_carousel_photo/{isu}")
+@rollbar_handler
 async def delete_carousel_photo(isu: int, photo_url: str):
     user_collection = db_instance.get_collection("users")
 
@@ -259,6 +271,7 @@ async def delete_carousel_photo(isu: int, photo_url: str):
     return {"message": "carousel photo deleted successfully"}
 
 @router.put("/update_gender_preference")
+@rollbar_handler
 async def update_gender_preference(payload: GenderPreferencesSelectionModel):
     user_collection = db_instance.get_collection("users")
 
