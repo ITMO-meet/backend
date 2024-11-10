@@ -1,9 +1,10 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from dotenv import load_dotenv
 from minio import Minio
 from bson import ObjectId
+import datetime
 
 from app.setup_rollbar import rollbar_handler
 
@@ -156,6 +157,27 @@ class Database:
         return result
 
         return [str(tag_id) for tag_id in result.inserted_ids]
+    
+    @rollbar_handler
+    async def create_chat(self, chat_id: str, isu_1: int, isu_2: int, status: Optional[str] = "active"):
+        chat_data = {
+            "chat_id": chat_id,
+            "isu_1": isu_1,
+            "isu_2": isu_2,
+            "created_at": datetime.datetime.now(datetime.timezone.utc),
+            "status": status
+        }
+        result = await self.db["chats"].insert_one(chat_data)
+        return str(result)
+    
+    @rollbar_handler
+    async def get_chats_by_user(self, isu: int):
+        result = await self.db["chats"].find(
+            {"$or": [{"isu_1": isu}, {"isu_2": isu}]}
+        ).to_list(length=None)
+        return [{"chat_id": chat["chat_id"]} for chat in result]
+
+
 
 
 db_instance = Database()
