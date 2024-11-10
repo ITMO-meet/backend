@@ -15,7 +15,7 @@ async def create_chat(payload: CreateChat):
 
     chat_id = str(uuid4())
     await db_instance.create_chat(chat_id=chat_id, isu_1=payload.isu_1, isu_2=payload.isu_2)
-    return {"message": "Chat created", "chat_id": chat_id}
+    return {"chat_id": chat_id}
 
 @router.get("/user_chats/{isu}")
 @rollbar_handler
@@ -35,7 +35,7 @@ async def send_message(payload: SendMessage):
         receiver_id=payload.receiver_id,
         text=payload.text
     )
-    return {"message": "message sent", "message_id": message_id}
+    return {"message_id": message_id}
 
 @router.get("/get_messages/{chat_id}")
 @rollbar_handler
