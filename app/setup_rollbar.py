@@ -1,6 +1,7 @@
 import rollbar
 import os
 from functools import wraps
+import inspect
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,24 +14,24 @@ def init_rollbar():
     rollbar.report_message("Rollbar initialized successfully", "info")
 
 def rollbar_handler(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        try:
-            return await func(*args, **kwargs)
-        except Exception as e:
-            rollbar.report_exc_info()      
-            raise e
-    return wrapper
-
-def rollbar_sync_handler(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            rollbar.report_exc_info()
-            raise e
-    return wrapper
+    if inspect.iscoroutinefunction(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except Exception:
+                rollbar.report_exc_info()
+                raise
+        return wrapper
+    else:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                rollbar.report_exc_info()
+                raise
+        return wrapper
 
 
 # def main():

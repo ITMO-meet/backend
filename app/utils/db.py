@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from minio import Minio
 from bson import ObjectId
 
-from app.setup_rollbar import rollbar_handler, rollbar_sync_handler
+from app.setup_rollbar import rollbar_handler
 
 load_dotenv()
 
@@ -37,7 +37,7 @@ class Database:
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
 
-    @rollbar_sync_handler
+    @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):
         self.minio_instance.put_object(
             self.minio_bucket_name,
@@ -49,7 +49,7 @@ class Database:
         )
         return f"{self.minio_bucket_name}/{filename}"
 
-    @rollbar_sync_handler
+    @rollbar_handler
     def get_collection(self, collection_name):
         return self.db[collection_name]
 

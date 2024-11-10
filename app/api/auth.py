@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse
 
 from app.models.user import UserModel
 from app.utils.db import db_instance
-from app.setup_rollbar import rollbar_handler, rollbar_sync_handler
+from app.setup_rollbar import rollbar_handler
 
 router = APIRouter()
 
@@ -19,12 +19,12 @@ CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
 REDIRECT_URI = "https://my.itmo.ru/login/callback"
 
-@rollbar_sync_handler
+@rollbar_handler
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
     return re.sub("[^a-zA-Z0-9]+", "", code_verifier)
 
-@rollbar_sync_handler
+@rollbar_handler
 def get_code_challenge(code_verifier: str):
     code_challenge_bytes = sha256(code_verifier.encode("utf-8")).digest()
     code_challenge = urlsafe_b64encode(code_challenge_bytes).decode("utf-8")
