@@ -450,3 +450,249 @@ async def test_update_logo_user_not_found(app):
 
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or logo not updated"}
+
+
+@pytest.mark.asyncio
+async def test_get_profile_user_not_found(app):
+    isu = 123456
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.find_one.return_value = None
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.get(f"/get_profile/{isu}")
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found"}
+        mock_user_collection.find_one.assert_awaited_once_with({"isu": isu})
+
+
+@pytest.mark.asyncio
+async def test_update_gender_preference_success(app):
+    payload = {"isu": 123456, "gender_preference": "Male"}
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put("/update_gender_preference", json=payload)
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "gender preference updated successfully"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": payload["isu"]},
+            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_gender_preference_user_not_found(app):
+    payload = {"isu": 123456, "gender_preference": "Male"}
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put("/update_gender_preference", json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {
+            "detail": "User not found or gender preference not updated"
+        }
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": payload["isu"]},
+            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_carousel_photo_success(app):
+    isu = 123456
+    old_photo_url = "old_photo.png"
+    new_file_content = b"new image data"
+    new_file = BytesIO(new_file_content)
+    new_file.filename = "new_photo.png"
+    new_file.content_type = "image/png"
+    new_file_extension = "png"
+    new_file_uuid = "12345678123456781234567812345678"
+    new_file_name = f"carousel/{isu}_{new_file_uuid}.{new_file_extension}"
+    new_file_url = f"bucket/{new_file_name}"
+
+    user_data = {
+        "isu": isu,
+        "photos": {"carousel": [old_photo_url, "another_photo.png"]},
+    }
+
+    with patch("app.api.profile.db_instance") as mock_db_instance, patch(
+        "uuid.uuid4", return_value=uuid.UUID(new_file_uuid)
+    ):
+
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = user_data
+
+        mock_db_instance.minio_instance.remove_object.return_value = None
+        mock_db_instance.upload_file_to_minio.return_value = new_file_url
+
+        mock_user_collection.update_one.return_value.modified_count = 1
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_carousel_photo/{isu}",
+                params={"old_photo_url": old_photo_url},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "message": "carousel photo updated successfully",
+            "new_photo_url": new_file_url,
+        }
+        mock_db_instance.minio_instance.remove_object.assert_called_once_with(
+            mock_db_instance.minio_bucket_name, old_photo_url
+        )
+        mock_db_instance.upload_file_to_minio.assert_called_once()
+        mock_user_collection.update_one.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_carousel_photo_user_not_found(app):
+    isu = 123456
+    old_photo_url = "old_photo.png"
+    new_file_content = b"new image data"
+    new_file = BytesIO(new_file_content)
+    new_file.filename = "new_photo.png"
+    new_file.content_type = "image/png"
+
+    with patch("app.api.profile.db_instance") as mock_db_instance:
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = None
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_carousel_photo/{isu}",
+                params={"old_photo_url": old_photo_url},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found"}
+
+
+@pytest.mark.asyncio
+async def test_update_carousel_photo_old_photo_not_found(app):
+    isu = 123456
+    old_photo_url = "non_existing_photo.png"
+    new_file_content = b"new image data"
+    new_file = BytesIO(new_file_content)
+    new_file.filename = "new_photo.png"
+    new_file.content_type = "image/png"
+
+    user_data = {"isu": isu, "photos": {"carousel": ["photo1.png", "photo2.png"]}}
+
+    with patch("app.api.profile.db_instance") as mock_db_instance:
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = user_data
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_carousel_photo/{isu}",
+                params={"old_photo_url": old_photo_url},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Photo not found in carousel"}
+
+
+@pytest.mark.asyncio
+async def test_delete_carousel_photo_success(app):
+    isu = 123456
+    photo_url = "photo_to_delete.png"
+
+    user_data = {"isu": isu, "photos": {"carousel": [photo_url, "another_photo.png"]}}
+
+    with patch("app.api.profile.db_instance") as mock_db_instance:
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = user_data
+
+        mock_db_instance.minio_instance.remove_object.return_value = None
+
+        mock_user_collection.update_one.return_value.modified_count = 1
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "carousel photo deleted successfully"}
+        mock_db_instance.minio_instance.remove_object.assert_called_once_with(
+            mock_db_instance.minio_bucket_name, photo_url
+        )
+        mock_user_collection.update_one.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_carousel_photo_user_not_found(app):
+    isu = 123456
+    photo_url = "photo_to_delete.png"
+
+    with patch("app.api.profile.db_instance") as mock_db_instance:
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = None
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found"}
+
+
+@pytest.mark.asyncio
+async def test_delete_carousel_photo_photo_not_found(app):
+    isu = 123456
+    photo_url = "non_existing_photo.png"
+
+    user_data = {"isu": isu, "photos": {"carousel": ["photo1.png", "photo2.png"]}}
+
+    with patch("app.api.profile.db_instance") as mock_db_instance:
+        mock_user_collection = AsyncMock()
+        mock_db_instance.get_collection.return_value = mock_user_collection
+
+        mock_user_collection.find_one.return_value = user_data
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Photo not found in carousel"}
