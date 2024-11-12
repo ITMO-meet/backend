@@ -5,6 +5,7 @@ from app.api import quizes_results
 from app.api import auth
 from app.api import register
 from app.api import profile
+from app.api import chats
 from app import setup_rollbar
 
 app = FastAPI()
@@ -15,6 +16,7 @@ app.include_router(quizes_results.router, prefix="/results")
 app.include_router(auth.router, prefix="/auth")
 app.include_router(register.router, prefix="/auth")
 app.include_router(profile.router, prefix="/profile")
+app.include_router(chats.router, prefix="/chats")
 
 
 def main():
