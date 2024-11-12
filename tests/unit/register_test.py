@@ -3,7 +3,9 @@ from httpx import AsyncClient
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.main import app
 from app.utils.db import db_instance
+import os
 
+os.environ['TESTING'] = 'True'
 
 @pytest.mark.asyncio
 async def test_select_tags_success():

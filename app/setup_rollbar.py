@@ -20,7 +20,8 @@ def rollbar_handler(func):
             try:
                 return await func(*args, **kwargs)
             except Exception:
-                rollbar.report_exc_info()
+                if not os.getenv('TESTING'):
+                    rollbar.report_exc_info()
                 raise
         return wrapper
     else:
@@ -29,7 +30,8 @@ def rollbar_handler(func):
             try:
                 return func(*args, **kwargs)
             except Exception:
-                rollbar.report_exc_info()
+                if not os.getenv('TESTING'):
+                    rollbar.report_exc_info()
                 raise
         return wrapper
 
