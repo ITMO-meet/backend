@@ -27,7 +27,7 @@ class Database:
         minio_use_ssl = os.getenv("MINIO_USE_SSL", "False").lower() == "true"
 
         if not all(
-            [minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]
+                [minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]
         ):
             raise ValueError("MINIO not found in env")
 
@@ -58,7 +58,7 @@ class Database:
     async def get_available_tags(self):
         tags = await self.db["tags"].find().to_list(length=None)
         return [{"id": str(tag["_id"]), "name": tag["name"]} for tag in tags]
-    
+
     @rollbar_handler
     async def get_special_tags(self):
         special_tags = await self.db["tags"].find({"is_special": 1}).to_list(length=None)
@@ -71,7 +71,7 @@ class Database:
 
     @rollbar_handler
     async def create_test(
-        self, name: str, description: str, question_ids: List[ObjectId]
+            self, name: str, description: str, question_ids: List[ObjectId]
     ):
         test_data = {
             "name": name,
@@ -90,6 +90,7 @@ class Database:
         question_data = {"description": description}
         result = await self.db["questions"].insert_one(question_data)
         return str(result.inserted_id)
+
     @rollbar_handler
     async def get_question_by_id(self, question_id: str):
         question = await self.db["questions"].find_one({"_id": ObjectId(question_id)})
@@ -131,7 +132,7 @@ class Database:
         if not result:
             return None
         return result["answers"]
-    
+
     @rollbar_handler
     async def get_status(self, result_id: str):
         status = await self.db["results"].find_one({"_id": ObjectId(result_id)})
@@ -157,7 +158,7 @@ class Database:
         return result
 
         return [str(tag_id) for tag_id in result.inserted_ids]
-    
+
     @rollbar_handler
     async def create_chat(self, chat_id: str, isu_1: int, isu_2: int, status: Optional[str] = "active"):
         chat_data = {
@@ -169,14 +170,14 @@ class Database:
         }
         result = await self.db["chats"].insert_one(chat_data)
         return str(result)
-    
+
     @rollbar_handler
     async def get_chats_by_user(self, isu: int):
         result = await self.db["chats"].find(
             {"$or": [{"isu_1": isu}, {"isu_2": isu}]}
         ).to_list(length=None)
         return [{"chat_id": chat["chat_id"]} for chat in result]
-    
+
     @rollbar_handler
     async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
         message_data = {
@@ -189,13 +190,13 @@ class Database:
 
         result = await self.db["messages"].insert_one(message_data)
         return str(result.inserted_id)
-    
+
     @rollbar_handler
     async def get_messages(self, chat_id: str, limit: int = 5, offset: int = 0):
-        messages = await self.db["messages"].find({"chat_id": chat_id})\
-            .sort("sent_at", -1)\
-            .skip(offset)\
-            .limit(limit)\
+        messages = await self.db["messages"].find({"chat_id": chat_id}) \
+            .sort("sent_at", -1) \
+            .skip(offset) \
+            .limit(limit) \
             .to_list(length=None)
         return [
             {
@@ -208,7 +209,75 @@ class Database:
             for message in messages
         ]
 
+    @rollbar_handler
+    async def get_people(self, current_user_id: Optional[int]):
+        # Exclude people that the current user has already interacted with
+        interacted_person_ids = []
+        if current_user_id:
+            interactions = await self.db["interactions"].find({"user_id": current_user_id}).to_list(length=None)
+            interacted_person_ids = [interaction["person_id"] for interaction in interactions]
 
+        people_cursor = self.db["users"].find(
+            {"isu": {"$ne": current_user_id, "$nin": interacted_person_ids}},
+            {"_id": 0, "isu": 1, "username": 1, "bio": 1, "photos.logo": 1}
+        )
+
+        people = []
+        async for person in people_cursor:
+            people.append({
+                "id": person["isu"],
+                "name": person["username"],
+                "description": person.get("bio", ""),
+                "imageUrl": person["photos"].get("logo", ""),
+            })
+
+        return people
+
+    @rollbar_handler
+    async def like_person(self, user_id: int, person_id: int):
+        await self.db["interactions"].update_one(
+            {"user_id": user_id, "person_id": person_id},
+            {"$set": {"interaction": "like", "timestamp": datetime.datetime.now(datetime.timezone.utc)}},
+            upsert=True
+        )
+
+    @rollbar_handler
+    async def dislike_person(self, user_id: int, person_id: int):
+        await self.db["interactions"].update_one(
+            {"user_id": user_id, "person_id": person_id},
+            {"$set": {"interaction": "dislike", "timestamp": datetime.datetime.now(datetime.timezone.utc)}},
+            upsert=True
+        )
+
+    @rollbar_handler
+    async def superlike_person(self, user_id: int, person_id: int):
+        await self.db["interactions"].update_one(
+            {"user_id": user_id, "person_id": person_id},
+            {"$set": {"interaction": "superlike", "timestamp": datetime.datetime.now(datetime.timezone.utc)}},
+            upsert=True
+        )
+
+    @rollbar_handler
+    async def get_chat_by_users(self, user1: int, user2: int):
+        chat = await self.db["chats"].find_one({
+            "$or": [
+                {"isu_1": user1, "isu_2": user2},
+                {"isu_1": user2, "isu_2": user1},
+            ]
+        })
+        return chat
+
+    @rollbar_handler
+    async def create_chat(self, chat_id: str, isu_1: int, isu_2: int, status: Optional[str] = "active"):
+        chat_data = {
+            "chat_id": chat_id,
+            "isu_1": isu_1,
+            "isu_2": isu_2,
+            "created_at": datetime.datetime.now(datetime.timezone.utc),
+            "status": status
+        }
+        result = await self.db["chats"].insert_one(chat_data)
+        return str(result.inserted_id)
 
 
 db_instance = Database()
