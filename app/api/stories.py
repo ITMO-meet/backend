@@ -3,14 +3,13 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
-from app.models.story import ViewStory
+from app.models.story import GetStory
 
 router = APIRouter()
 
-@router.post("/upload_story")
+@router.post("/create_story")
 @rollbar_handler
-async def upload_story(isu: int, file: UploadFile = File(...)):
-    user_collection = db_instance.get_collection("users")
+async def create_story(isu: int, file: UploadFile = File(...)):
     stories_collection = db_instance.get_collection("stories")
     
     file_extension = file.filename.split(".")[-1]
@@ -36,13 +35,13 @@ async def upload_story(isu: int, file: UploadFile = File(...)):
     
     return {"expDate": expiration_date, "id": update_result.updated_id}
 
-@router.get("/get_story/{isu}")
+@router.get("/get_story/")
 @rollbar_handler
-async def get_stroy(isu: int):
+async def get_stroy(payload: GetStory):
     stories_collection = db_instance.get_collection("stories")
-    
+    has_access = True # TODO: add check with match
     result = await stories_collection.find_one(
-        {"isu": isu}
+        {"isu": payload.isu_whose}
     )
     if not result:
         raise HTTPException(status_code=404, detail="Story not found")
