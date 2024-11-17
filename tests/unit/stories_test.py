@@ -97,7 +97,7 @@ async def test_get_story_success(app):
         mock_stories_collection.find_one.return_value = story_data
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.post("/get_story/", json=payload)
+            response = await ac.post("/get_story", json=payload)
 
         assert response.status_code == 200
         assert response.json() == {
@@ -122,7 +122,7 @@ async def test_get_story_not_found(app):
         mock_stories_collection.find_one.return_value = None
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.post("/get_story/", json=payload)
+            response = await ac.post("/get_story", json=payload)
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story not found"}
