@@ -25,7 +25,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
         filename,
         content_type=file.content_type or "application/octet-stream",
     )
-    update_result = await stories_collection.update_one(
+    update_result = await stories_collection.insert_one(
         {"isu": isu},
         {"url": file_url},
         {"expiration_date": expiration_date}
@@ -34,7 +34,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Story cannot be inserted")
     
-    return {"expDate": expiration_date, "id": update_result.updated_id}
+    return {"expDate": expiration_date, "id": str(update_result.inserted_id)}
 
 @router.get("/get_story/")
 @rollbar_handler
