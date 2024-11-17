@@ -1,15 +1,10 @@
 import pytest
 from httpx import AsyncClient
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.main import app
 from app.api.stories import (
-    get_story,
-    create_story,
-    get_user_stories,
     router,
 )
-from io import BytesIO
 from app.utils.db import db_instance
 from bson import ObjectId
 from datetime import datetime, timedelta
@@ -21,13 +16,17 @@ def app():
     app.include_router(router)
     return app
 
-#create_story
+
+# create_story
 @pytest.mark.asyncio
 async def test_create_story_success(app):
     isu = 123456
 
-    with patch.object(db_instance, "get_collection") as mock_get_collection, \
-         patch.object(db_instance, "upload_file_to_minio", new_callable=AsyncMock) as mock_upload_file:
+    with patch.object(
+        db_instance, "get_collection"
+    ) as mock_get_collection, patch.object(
+        db_instance, "upload_file_to_minio", new_callable=AsyncMock
+    ) as mock_upload_file:
 
         mock_stories_coll = MagicMock()
         mock_get_collection.return_value = mock_stories_coll
@@ -39,9 +38,7 @@ async def test_create_story_success(app):
         mock_stories_coll.insert_one = AsyncMock(return_value=mock_insert_res)
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            files = {
-                "file": ("test.jpg", b"random img data", "image/jpeg")
-            }
+            files = {"file": ("test.jpg", b"random img data", "image/jpeg")}
             params = {"isu": isu}
             response = await ac.post("/create_story", params=params, files=files)
 
@@ -58,8 +55,11 @@ async def test_create_story_success(app):
 async def test_create_story_failure(app):
     isu = 123456
 
-    with patch.object(db_instance, "get_collection") as mock_get_collection, \
-         patch.object(db_instance, "upload_file_to_minio", new_callable=AsyncMock) as mock_upload_file_to_minio:
+    with patch.object(
+        db_instance, "get_collection"
+    ) as mock_get_collection, patch.object(
+        db_instance, "upload_file_to_minio", new_callable=AsyncMock
+    ) as mock_upload_file_to_minio:
 
         mock_stories_collection = MagicMock()
         mock_get_collection.return_value = mock_stories_collection
@@ -71,26 +71,23 @@ async def test_create_story_failure(app):
         mock_stories_collection.insert_one = AsyncMock(return_value=mock_insert_res)
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            files = {"file": ("test.jpg", b'random img data', "image/jpeg")}
+            files = {"file": ("test.jpg", b"random img data", "image/jpeg")}
             params = {"isu": isu}
             response = await ac.post("/create_story", params=params, files=files)
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story cannot be inserted"}
 
+
 # get story
 @pytest.mark.asyncio
 async def test_get_story_success(app):
-    payload = {
-        "isu_from": 123456,
-        "isu_whose": 654321,
-        "story_id": str(ObjectId())
-    }
+    payload = {"isu_from": 123456, "isu_whose": 654321, "story_id": str(ObjectId())}
     story_data = {
         "_id": ObjectId(payload["story_id"]),
         "isu": payload["isu_whose"],
         "url": "http://minio.test/stories/story.jpg",
-        "expiration_date": int((datetime.now() + timedelta(hours=24)).timestamp())
+        "expiration_date": int((datetime.now() + timedelta(hours=24)).timestamp()),
     }
 
     with patch.object(db_instance, "get_collection") as mock_get_collection:
@@ -107,17 +104,16 @@ async def test_get_story_success(app):
             "id": payload["story_id"],
             "isu": story_data["isu"],
             "url": story_data["url"],
-            "expiration_date": story_data["expiration_date"]
+            "expiration_date": story_data["expiration_date"],
         }
-        mock_stories_collection.find_one.assert_called_once_with({"_id": ObjectId(payload["story_id"])})
+        mock_stories_collection.find_one.assert_called_once_with(
+            {"_id": ObjectId(payload["story_id"])}
+        )
+
 
 @pytest.mark.asyncio
 async def test_get_story_not_found(app):
-    payload = {
-        "isu_from": 123456,
-        "isu_whose": 654321,
-        "story_id": str(ObjectId())
-    }
+    payload = {"isu_from": 123456, "isu_whose": 654321, "story_id": str(ObjectId())}
 
     with patch.object(db_instance, "get_collection") as mock_get_collection:
         mock_stories_collection = AsyncMock()
@@ -130,7 +126,9 @@ async def test_get_story_not_found(app):
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story not found"}
-        mock_stories_collection.find_one.assert_called_once_with({"_id": ObjectId(payload["story_id"])})
+        mock_stories_collection.find_one.assert_called_once_with(
+            {"_id": ObjectId(payload["story_id"])}
+        )
 
 
 @pytest.mark.asyncio
