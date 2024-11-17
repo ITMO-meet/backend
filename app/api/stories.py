@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from uuid import uuid4
 from datetime import datetime, timedelta
 from app.utils.db import db_instance
@@ -21,7 +21,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
     expiration = curr_time + timedelta(hours=24)
     expiration_date = int(expiration.timestamp())
 
-    file_url = await db_instance.upload_file_to_minio(
+    file_url = db_instance.upload_file_to_minio(
         file.file,
         filename,
         content_type=file.content_type or "application/octet-stream",
