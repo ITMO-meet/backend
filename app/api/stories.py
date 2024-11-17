@@ -8,43 +8,44 @@ from bson import ObjectId
 
 router = APIRouter()
 
+
 @router.post("/create_story")
 @rollbar_handler
 async def create_story(isu: int, file: UploadFile = File(...)):
     stories_collection = db_instance.get_collection("stories")
-    
+
     file_extension = file.filename.split(".")[-1]
     filename = f"stories/{isu}_{uuid4()}.{file_extension}"
-    
+
     curr_time = datetime.now()
     expiration = curr_time + timedelta(hours=24)
     expiration_date = int(expiration.timestamp())
-    
-    file_url = db_instance.upload_file_to_minio(
+
+    file_url = await db_instance.upload_file_to_minio(
         file.file,
         filename,
         content_type=file.content_type or "application/octet-stream",
     )
-    update_result = await stories_collection.insert_one(
-        {"isu": isu},
-        {"url": file_url},
-        {"expiration_date": expiration_date}
-    )
-    
-    if update_result.modified_count == 0:
+
+    story_document = {"isu": isu, "url": file_url, "expiration_date": expiration_date}
+
+    insert_result = await stories_collection.insert_one(story_document)
+
+    if not insert_result.inserted_id:
         raise HTTPException(status_code=404, detail="Story cannot be inserted")
-    
-    return {"expDate": expiration_date, "id": str(update_result.inserted_id)}
+
+    return {"expDate": expiration_date, "id": str(insert_result.inserted_id)}
+
 
 @router.post("/get_story/")
 @rollbar_handler
 async def get_story(payload: GetStory):
     stories_collection = db_instance.get_collection("stories")
     has_access = True  # TODO: Implement access control logic
-    
+
     if not has_access:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     story = await stories_collection.find_one({"_id": ObjectId(payload.story_id)})
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
@@ -52,7 +53,7 @@ async def get_story(payload: GetStory):
         "id": str(story["_id"]),
         "isu": story["isu"],
         "url": story["url"],
-        "expiration_date": story["expiration_date"]
+        "expiration_date": story["expiration_date"],
     }
 
 
@@ -64,5 +65,5 @@ async def get_user_stories(isu: int):
     stories = await cursor.to_list(length=None)
     if not stories:
         raise HTTPException(status_code=404, detail="User has no stories")
-    story_ids = [str(story['_id']) for story in stories]
+    story_ids = [str(story["_id"]) for story in stories]
     return {"stories": story_ids}
