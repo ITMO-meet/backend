@@ -36,7 +36,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
     
     return {"expDate": expiration_date, "id": str(update_result.inserted_id)}
 
-@router.get("/get_story/")
+@router.post("/get_story/")
 @rollbar_handler
 async def get_story(payload: GetStory):
     stories_collection = db_instance.get_collection("stories")
