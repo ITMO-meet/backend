@@ -207,7 +207,43 @@ class Database:
             }
             for message in messages
         ]
+    
+    @rollbar_handler
+    async def get_random_person(self, current_user_id: int) -> Optional[Dict[str, Any]]:
+        disliked_users = await self.db["dislikes"].find({"user_id": current_user_id}).to_list(length=None)
+        disliked_ids = [d["target_id"] for d in disliked_users]
 
+        pipeline = [
+            {"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}},
+            {"$sample": {"size": 1}}
+        ]
+
+        person = await self.db["users"].aggregate(pipeline).to_list(length=1)
+        return person[0] if person else None
+
+    @rollbar_handler
+    async def like_user(self, user_id: int, target_id: int):
+        await self.db["likes"].insert_one({
+            "user_id": user_id,
+            "target_id": target_id,
+            "created_at": datetime.datetime.now(datetime.timezone.utc)
+        })
+
+        mutual_like = await self.db["likes"].find_one({"user_id": target_id, "target_id": user_id})
+
+        if mutual_like:
+            chat_id = str(ObjectId())
+            await self.create_chat(chat_id=chat_id, isu_1=user_id, isu_2=target_id)
+            return {"matched": True, "chat_id": chat_id}
+        return {"matched": False, "chat_id": None}
+
+    @rollbar_handler
+    async def dislike_user(self, user_id: int, target_id: int):
+        await self.db["dislikes"].insert_one({
+            "user_id": user_id,
+            "target_id": target_id,
+            "created_at": datetime.datetime.now(datetime.timezone.utc)
+        })
 
 
 
