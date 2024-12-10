@@ -7,8 +7,7 @@ from hashlib import sha256
 
 from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import RedirectResponse
-
+from pydantic import BaseModel
 from app.models.user import UserModel
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
@@ -18,6 +17,10 @@ router = APIRouter()
 CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
 REDIRECT_URI = "https://my.itmo.ru/login/callback"
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 @rollbar_handler
 def generate_code_verifier():
@@ -31,9 +34,12 @@ def get_code_challenge(code_verifier: str):
     return code_challenge.replace("=", "")
 
 
-@router.get("/login_with_password")
+@router.post("/login_with_password")
 @rollbar_handler
-async def login_with_password(username: str, password: str):
+async def login_with_password(payload: LoginRequest):
+    username = payload.username
+    password = payload.password
+
     code_verifier = generate_code_verifier()
     code_challenge = get_code_challenge(code_verifier)
 
@@ -121,11 +127,11 @@ async def login_with_password(username: str, password: str):
         existing_user = await user_collection.find_one({"isu": user_info["isu"]})
 
         if existing_user:
-            return RedirectResponse("/auth/dashboard")
+            # Возвращаем JSON с redirect
+            return {"redirect": "/auth/dashboard", "isu": user_info["isu"]}
         else:
             await fill_user_info(user_info)
-            return RedirectResponse("/auth/register/select_username")
-
+            return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
 
 @router.get("/dashboard")
 @rollbar_handler
