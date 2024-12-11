@@ -213,6 +213,11 @@ async def update_carousel_photo(
     photos = user.get("photos", [])
     if old_photo_url not in photos:
         raise HTTPException(status_code=404, detail="Photo not found in carousel")
+    
+    try:
+        db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, old_photo_url)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to delete old photo from storage")
 
     updated_photos = [
         new_file_url if photo == old_photo_url else photo for photo in photos
