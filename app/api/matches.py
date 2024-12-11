@@ -13,26 +13,42 @@ async def get_random_person(user_id: int):
     if not person:
         raise HTTPException(status_code=404, detail="No more persons available")
 
-    return {
-        "id": person["isu"],
-        "name": person.get("name", ""),
-        "description": person.get("description", ""),
-        "imageUrl": person.get("imageUrl", ""),
+    response_data = {
+        "isu": person["isu"],
+        "username": person.get("username", ""),
+        "bio": person.get("bio", ""),
+        "logo": person.get("logo", ""),
+        "photos": person.get("photos", []),
+        "mainFeatures": person.get("mainFeatures", []),
+        "interests": person.get("interests", []),
+        "itmo": person.get("itmo", []),
+        "gender_preferences": person.get("gender_preferences", []),
+        "relationship_preferences": person.get("relationship_preferences", []),
+        "isStudent": person.get("isStudent", True),
     }
+
+    return response_data
 
 
 @router.post("/like_person")
 @rollbar_handler
 async def like_person(payload: UserAction):
     result = await db_instance.like_user(payload.user_id, payload.target_id)
-    return result
+
+    if result["matched"]:
+        return {
+            "message": "You have a match!",
+            "matched": True,
+            "chat_id": result["chat_id"],
+        }
+    return {"message": "person liked successfully", "matched": False}
 
 
 @router.post("/dislike_person")
 @rollbar_handler
 async def dislike_person(payload: UserAction):
     await db_instance.dislike_user(payload.user_id, payload.target_id)
-    return {"status": "ok"}
+    return {"message": "person disliked successfully"}
 
 
 @router.get("/liked_me")
@@ -53,40 +69,18 @@ async def get_matches(isu: int):
 
     result = []
     for user in users:
-        isu_val = user.get("isu", 0)
-        username = user.get("username", "")
-        bio = user.get("bio", "")
-        photos_info = user.get("photos", {})
-        logo = photos_info.get("logo", "")
-        carousel = photos_info.get("carousel", [])
-
-        person_params = user.get("person_params", {})
-        height = person_params.get("height", None)
-        faculty = person_params.get("faculty", None)
-        zodiac = person_params.get("zodiac_sign", None)
-
-        mainFeatures = []
-        if height:
-            mainFeatures.append({"text": f"{height} cm", "icon": "StraightenIcon"})
-        if zodiac:
-            mainFeatures.append({"text": zodiac, "icon": "ZodiacIcon"})
-
-        interests = []
-        itmo = []
-        if faculty:
-            itmo.append({"text": faculty, "icon": "HomeIcon"})
-        itmo.append({"text": str(isu_val), "icon": "BadgeIcon"})
-
         user_data = {
-            "id": isu_val,
-            "name": username,
-            "description": bio,
-            "imageUrl": logo,
-            "photos": carousel,
-            "mainFeatures": mainFeatures,
-            "interests": interests,
-            "itmo": itmo,
-            "isStudent": True,
+            "isu": user["isu"],
+            "username": user.get("username", ""),
+            "bio": user.get("bio", ""),
+            "logo": user.get("logo", ""),
+            "photos": user.get("photos", []),
+            "mainFeatures": user.get("mainFeatures", []),
+            "interests": user.get("interests", []),
+            "itmo": user.get("itmo", []),
+            "gender_preferences": user.get("gender_preferences", []),
+            "relationship_preferences": user.get("relationship_preferences", []),
+            "isStudent": user.get("isStudent", True),
         }
         result.append(user_data)
 
