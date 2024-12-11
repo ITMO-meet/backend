@@ -9,7 +9,6 @@ from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 
-from app.models.user import UserModel
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
 
