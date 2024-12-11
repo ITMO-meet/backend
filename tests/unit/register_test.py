@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from app.main import app
 from app.utils.db import db_instance
 import os
+from bson import ObjectId
 
 os.environ['TESTING'] = 'True'
 
@@ -22,8 +23,8 @@ async def test_select_tags_success():
         mock_cursor = MagicMock()
         mock_cursor.to_list = AsyncMock(
             return_value=[
-                {"_id": "tag1", "name": "Tag1"},
-                {"_id": "tag2", "name": "Tag2"},
+                {"_id": ObjectId("5f43a1c667a9032a6e63d9f1"), "name": "Tag1", "is_special": 0},
+                {"_id": ObjectId("5f43a1c667a9032a6e63d9f2"), "name": "Tag2", "is_special": 0},
             ]
         )
         mock_tags_collection.find.return_value = mock_cursor
@@ -33,7 +34,7 @@ async def test_select_tags_success():
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.post(
                 "/auth/register/select_tags",
-                json={"isu": 12345, "tags": ["Tag1", "Tag2"]},
+                json={"isu": 12345, "tags": ["5f43a1c667a9032a6e63d9f1", "5f43a1c667a9032a6e63d9f2"]},
             )
     assert response.status_code == 200
     assert response.json() == {
@@ -62,11 +63,11 @@ async def test_select_tags_not_found():
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.post(
                 "/auth/register/select_tags",
-                json={"isu": 12345, "tags": ["NonExistingTag"]},
+                json={"isu": 12345, "tags": ["5f43a1c667a9032a6e63d9f1"]},
             )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Tags not found"}
+    assert response.json() == {"detail": "Some tags do not exist"}
 
 
 @pytest.mark.asyncio
@@ -120,7 +121,7 @@ async def test_add_profile_details_user_not_found():
             response = await ac.post("/auth/register/profile_details", json=payload)
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "User not found or profile not updated"}
+        assert response.json() == {"detail": "User not found or profile details not updated"}
 
 
 @pytest.mark.asyncio
@@ -315,7 +316,7 @@ async def test_select_preferences_success():
         assert response.json() == {"message": "Gender preference updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
             {"isu": payload["isu"]},
-            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+            {"$set": {"gender_preferences": [{"text": "Female", "icon": "gender_preferences"}]}},
         )
 
 
@@ -337,7 +338,7 @@ async def test_select_preferences_user_not_found():
         assert response.json() == {"detail": "User not found or preference not updated"}
         mock_user_collection.update_one.assert_called_once_with(
             {"isu": payload["isu"]},
-            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+            {"$set": {"gender_preferences": [{"text": "Female", "icon": "gender_preferences"}]}},
         )
 
 
@@ -367,7 +368,7 @@ async def test_select_tags_user_not_found():
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.post(
                 "/auth/register/select_tags",
-                json={"isu": 12345, "tags": ["Tag1", "Tag2"]},
+                json={"isu": 12345, "tags": ["5f43a1c667a9032a6e63d9f1"]},
             )
     assert response.status_code == 404
-    assert response.json() == {"detail": "User not found or tags not updated"}
+    assert response.json() == {"detail": "Some tags do not exist"}
