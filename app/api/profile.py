@@ -4,7 +4,6 @@ from app.models.tag import TagSelectionModel
 from app.models.user import GenderPreferencesSelectionModel, UsernameSelectionModel
 from app.setup_rollbar import rollbar_handler
 from bson import ObjectId
-from datetime import timedelta
 from uuid import uuid4
 
 router = APIRouter()
