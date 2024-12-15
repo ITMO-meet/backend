@@ -69,11 +69,4 @@ jobs:
             docker rm python-backend || true
             # Run the new container with environment variables
             # Adjust ports and environment variables as needed.
-            docker run -d --name python-backend \
-              -e MONGO_URI=${MONGO_URI} \
-              -e MINIO_ENDPOINT=${MINIO_ENDPOINT} \
-              -e MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY} \
-              -e MINIO_SECRET_KEY=${MINIO_SECRET_KEY} \
-              -e MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME} \
-              -e MINIO_USE_SSL=${MINIO_USE_SSL} \
-              -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
+            docker run -d --name python-backend -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
