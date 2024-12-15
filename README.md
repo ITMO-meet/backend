@@ -1,12 +1,15 @@
 # ITMO-meet Backend
+
 Это репозиторий бэкенда, который обрабатывает запросы с клиентской части
 
 ## Getting started
+
 Для установки зависимостей:
 
 `pip install -r requirements.txt`
 
 ## Testing
+
 Для запуска тестов:
 
 `pytest tests/unit` - запуск юнит тестов
@@ -18,4 +21,5 @@
 `pytest tests/integ --cov=app --cov-fail-under=80` - запуск интеграционных тестов с покрытием
 
 ## Запуск
+
 `uvicorn app.main:app --reload`
