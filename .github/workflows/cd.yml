@@ -46,6 +46,13 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            MONGO_URI=${{ env.MONGO_URI }}
+            MINIO_ENDPOINT=${{ env.MINIO_ENDPOINT }}
+            MINIO_ACCESS_KEY=${{ env.MINIO_ACCESS_KEY }}
+            MINIO_SECRET_KEY=${{ env.MINIO_SECRET_KEY }}
+            MINIO_BUCKET_NAME=${{ env.MINIO_BUCKET_NAME }}
+            MINIO_USE_SSL=${{ env.MINIO_USE_SSL }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             ${{ secrets.DOCKER_USERNAME }}/python-backend:${{ github.sha }}
