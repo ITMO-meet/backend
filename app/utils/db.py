@@ -26,14 +26,10 @@ class Database:
         self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
         minio_use_ssl = os.getenv("MINIO_USE_SSL", "False").lower() == "true"
 
-        if not all(
-            [minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]
-        ):
+        if not all([minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]):
             raise ValueError("MINIO not found in env")
 
-        self.minio_instance = Minio(
-            minio_endpoint, minio_access_key, minio_secret_key, secure=minio_use_ssl
-        )
+        self.minio_instance = Minio(minio_endpoint, minio_access_key, minio_secret_key, secure=minio_use_ssl)
 
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
@@ -58,7 +54,7 @@ class Database:
     async def get_available_tags(self):
         tags = await self.db["tags"].find().to_list(length=None)
         return [{"id": str(tag["_id"]), "name": tag["name"]} for tag in tags]
-    
+
     @rollbar_handler
     async def get_special_tags(self):
         special_tags = await self.db["tags"].find({"is_special": 1}).to_list(length=None)
@@ -70,9 +66,7 @@ class Database:
         return [str(tag_id) for tag_id in result.inserted_ids]
 
     @rollbar_handler
-    async def create_test(
-        self, name: str, description: str, question_ids: List[ObjectId]
-    ):
+    async def create_test(self, name: str, description: str, question_ids: List[ObjectId]):
         test_data = {
             "name": name,
             "description": description,
@@ -90,6 +84,7 @@ class Database:
         question_data = {"description": description}
         result = await self.db["questions"].insert_one(question_data)
         return str(result.inserted_id)
+
     @rollbar_handler
     async def get_question_by_id(self, question_id: str):
         question = await self.db["questions"].find_one({"_id": ObjectId(question_id)})
@@ -120,9 +115,7 @@ class Database:
             return None
         answers[question_index] = answer
 
-        await self.db["results"].update_one(
-            {"_id": ObjectId(result_id)}, {"$set": {"answers": answers}}
-        )
+        await self.db["results"].update_one({"_id": ObjectId(result_id)}, {"$set": {"answers": answers}})
         return answers
 
     @rollbar_handler
@@ -131,7 +124,7 @@ class Database:
         if not result:
             return None
         return result["answers"]
-    
+
     @rollbar_handler
     async def get_status(self, result_id: str):
         status = await self.db["results"].find_one({"_id": ObjectId(result_id)})
@@ -146,9 +139,7 @@ class Database:
             return None
 
         score = sum(result["answers"]) / (len(result["answers"]) * 6) * 100
-        await self.db["results"].update_one(
-            {"_id": ObjectId(result_id)}, {"$set": {"score": score, "completed": True}}
-        )
+        await self.db["results"].update_one({"_id": ObjectId(result_id)}, {"$set": {"score": score, "completed": True}})
         return score
 
     @rollbar_handler
@@ -157,7 +148,7 @@ class Database:
         return result
 
         return [str(tag_id) for tag_id in result.inserted_ids]
-    
+
     @rollbar_handler
     async def create_chat(self, chat_id: str, isu_1: int, isu_2: int, status: Optional[str] = "active"):
         chat_data = {
@@ -165,18 +156,16 @@ class Database:
             "isu_1": isu_1,
             "isu_2": isu_2,
             "created_at": datetime.datetime.now(datetime.timezone.utc),
-            "status": status
+            "status": status,
         }
         result = await self.db["chats"].insert_one(chat_data)
         return str(result)
-    
+
     @rollbar_handler
     async def get_chats_by_user(self, isu: int):
-        result = await self.db["chats"].find(
-            {"$or": [{"isu_1": isu}, {"isu_2": isu}]}
-        ).to_list(length=None)
+        result = await self.db["chats"].find({"$or": [{"isu_1": isu}, {"isu_2": isu}]}).to_list(length=None)
         return [{"chat_id": chat["chat_id"]} for chat in result]
-    
+
     @rollbar_handler
     async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
         message_data = {
@@ -189,45 +178,43 @@ class Database:
 
         result = await self.db["messages"].insert_one(message_data)
         return str(result.inserted_id)
-    
+
     @rollbar_handler
     async def get_messages(self, chat_id: str, limit: int = 5, offset: int = 0):
-        messages = await self.db["messages"].find({"chat_id": chat_id})\
-            .sort("sent_at", -1)\
-            .skip(offset)\
-            .limit(limit)\
+        messages = (
+            await self.db["messages"]
+            .find({"chat_id": chat_id})
+            .sort("sent_at", -1)
+            .skip(offset)
+            .limit(limit)
             .to_list(length=None)
+        )
         return [
             {
                 "message_id": str(message["_id"]),
                 "sender_id": message["sender_id"],
                 "receiver_id": message["receiver_id"],
                 "text": message["text"],
-                "timestamp": message["timestamp"]
+                "timestamp": message["timestamp"],
             }
             for message in messages
         ]
-    
+
     @rollbar_handler
     async def get_random_person(self, current_user_id: int) -> Optional[Dict[str, Any]]:
         disliked_users = await self.db["dislikes"].find({"user_id": current_user_id}).to_list(length=None)
         disliked_ids = [d["target_id"] for d in disliked_users]
 
-        pipeline = [
-            {"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}},
-            {"$sample": {"size": 1}}
-        ]
+        pipeline = [{"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}}, {"$sample": {"size": 1}}]
 
         person = await self.db["users"].aggregate(pipeline).to_list(length=1)
         return person[0] if person else None
 
     @rollbar_handler
     async def like_user(self, user_id: int, target_id: int):
-        await self.db["likes"].insert_one({
-            "user_id": user_id,
-            "target_id": target_id,
-            "created_at": datetime.datetime.now(datetime.timezone.utc)
-        })
+        await self.db["likes"].insert_one(
+            {"user_id": user_id, "target_id": target_id, "created_at": datetime.datetime.now(datetime.timezone.utc)}
+        )
 
         mutual_like = await self.db["likes"].find_one({"user_id": target_id, "target_id": user_id})
 
@@ -239,12 +226,9 @@ class Database:
 
     @rollbar_handler
     async def dislike_user(self, user_id: int, target_id: int):
-        await self.db["dislikes"].insert_one({
-            "user_id": user_id,
-            "target_id": target_id,
-            "created_at": datetime.datetime.now(datetime.timezone.utc)
-        })
-
+        await self.db["dislikes"].insert_one(
+            {"user_id": user_id, "target_id": target_id, "created_at": datetime.datetime.now(datetime.timezone.utc)}
+        )
 
 
 db_instance = Database()

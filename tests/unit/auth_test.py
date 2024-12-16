@@ -34,16 +34,9 @@ def mock_dependencies():
         "app.api.auth.get_code_challenge"
     ) as mock_challenge, patch("app.api.auth.ClientSession") as mock_session, patch(
         "app.utils.db.db_instance"
-    ) as mock_db_instance, patch(
-        "app.api.auth.fill_user_info", new_callable=AsyncMock
-    ) as mock_fill_user_info, patch(
+    ) as mock_db_instance, patch("app.api.auth.fill_user_info", new_callable=AsyncMock) as mock_fill_user_info, patch(
         "app.api.auth.PROVIDER_URL", PROVIDER_URL
-    ), patch(
-        "app.api.auth.CLIENT_ID", CLIENT_ID
-    ), patch(
-        "app.api.auth.REDIRECT_URI", REDIRECT_URI
-    ):
-
+    ), patch("app.api.auth.CLIENT_ID", CLIENT_ID), patch("app.api.auth.REDIRECT_URI", REDIRECT_URI):
         mock_verifier.return_value = "test_code_verifier"
         mock_challenge.return_value = "test_code_challenge"
 
@@ -72,9 +65,7 @@ def test_get_code_challenge():
 @pytest.mark.asyncio
 async def test_login_with_password_success(mock_user_info, mock_dependencies):
     session_instance = AsyncMock()
-    mock_dependencies["mock_session"].return_value.__aenter__.return_value = (
-        session_instance
-    )
+    mock_dependencies["mock_session"].return_value.__aenter__.return_value = session_instance
     mock_dependencies["mock_session"].return_value.__aexit__.return_value = AsyncMock()
 
     auth_resp = AsyncMock()
@@ -103,9 +94,7 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
         "username": mock_user_info["preferred_username"],
     }
 
-    mock_dependencies["mock_db_instance"].get_collection.return_value = (
-        user_collection_mock
-    )
+    mock_dependencies["mock_db_instance"].get_collection.return_value = user_collection_mock
 
     response = await login_with_password("test_user", "test_password")
 
@@ -115,9 +104,7 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
 
 @pytest.mark.asyncio
-async def test_login_with_password_invalid_credentials(
-    mock_user_info, mock_dependencies
-):
+async def test_login_with_password_invalid_credentials(mock_user_info, mock_dependencies):
     mock_session = mock_dependencies["mock_session"]
     mock_fill_user_info = mock_dependencies["mock_fill_user_info"]
 
@@ -145,9 +132,7 @@ async def test_login_with_password_invalid_credentials(
 
 
 @pytest.mark.asyncio
-async def test_login_with_password_form_action_not_found(
-    mock_user_info, mock_dependencies
-):
+async def test_login_with_password_form_action_not_found(mock_user_info, mock_dependencies):
     mock_session = mock_dependencies["mock_session"]
     mock_fill_user_info = mock_dependencies["mock_fill_user_info"]
 

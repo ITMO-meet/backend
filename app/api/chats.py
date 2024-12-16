@@ -12,14 +12,10 @@ router = APIRouter()
 @rollbar_handler
 async def create_chat(payload: CreateChat):
     if payload.isu_1 == payload.isu_2:
-        raise HTTPException(
-            status_code=400, detail="chat cannot be created for the same user"
-        )
+        raise HTTPException(status_code=400, detail="chat cannot be created for the same user")
 
     chat_id = str(uuid4())
-    await db_instance.create_chat(
-        chat_id=chat_id, isu_1=payload.isu_1, isu_2=payload.isu_2
-    )
+    await db_instance.create_chat(chat_id=chat_id, isu_1=payload.isu_1, isu_2=payload.isu_2)
     return {"chat_id": chat_id}
 
 
@@ -47,12 +43,8 @@ async def send_message(payload: SendMessage):
 
 @router.get("/get_messages/{chat_id}")
 @rollbar_handler
-async def get_messages(
-    chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)
-):
-    messages = await db_instance.get_messages(
-        chat_id=chat_id, limit=limit, offset=offset
-    )
+async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)):
+    messages = await db_instance.get_messages(chat_id=chat_id, limit=limit, offset=offset)
     if not messages:
         raise HTTPException(status_code=404, detail="messages not found")
     return {"messages": messages}

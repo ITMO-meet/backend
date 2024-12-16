@@ -6,33 +6,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def init_rollbar():
-    rollbar.init(
-        access_token=os.getenv("ROLLBAR_TOKEN"),
-        environment="production"
-    )
+    rollbar.init(access_token=os.getenv("ROLLBAR_TOKEN"), environment="production")
     rollbar.report_message("Rollbar initialized successfully", "info")
+
 
 def rollbar_handler(func):
     if inspect.iscoroutinefunction(func):
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
             except Exception:
-                if not os.getenv('TESTING'):
+                if not os.getenv("TESTING"):
                     rollbar.report_exc_info()
                 raise
+
         return wrapper
     else:
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Exception:
-                if not os.getenv('TESTING'):
+                if not os.getenv("TESTING"):
                     rollbar.report_exc_info()
                 raise
+
         return wrapper
 
 

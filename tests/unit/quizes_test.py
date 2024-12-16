@@ -14,9 +14,7 @@ async def test_get_test_info_success():
         "question_ids": ["q1", "q2", "q3"],
     }
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = test_data
 
         response = await get_test_info(test_id)
@@ -32,9 +30,7 @@ async def test_get_test_info_success():
 async def test_get_test_info_not_found():
     test_id = "test123"
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
@@ -53,13 +49,9 @@ async def test_start_test_success():
     }
     result_id = "result789"
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = test_data
-        with patch(
-            "app.utils.db.db_instance.create_result", new_callable=AsyncMock
-        ) as mock_create_result:
+        with patch("app.utils.db.db_instance.create_result", new_callable=AsyncMock) as mock_create_result:
             mock_create_result.return_value = result_id
 
             response = await start_test(test_id, payload)
@@ -72,9 +64,7 @@ async def test_start_test_test_not_found():
     test_id = "test123"
     payload = StartTestRequest(user_id="456")
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
@@ -92,13 +82,9 @@ async def test_start_test_create_result_failure():
         "question_ids": ["q1", "q2", "q3"],
     }
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = test_data
-        with patch(
-            "app.utils.db.db_instance.create_result", new_callable=AsyncMock
-        ) as mock_create_result:
+        with patch("app.utils.db.db_instance.create_result", new_callable=AsyncMock) as mock_create_result:
             mock_create_result.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
@@ -119,13 +105,9 @@ async def test_get_question_success():
         "description": "What is 2 + 2?",
     }
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = test_data
-        with patch(
-            "app.utils.db.db_instance.get_question_by_id", new_callable=AsyncMock
-        ) as mock_get_question_by_id:
+        with patch("app.utils.db.db_instance.get_question_by_id", new_callable=AsyncMock) as mock_get_question_by_id:
             mock_get_question_by_id.return_value = question_data
 
             response = await get_question(test_id, question_number)
@@ -141,9 +123,7 @@ async def test_get_question_test_not_found():
     test_id = "test123"
     question_number = 1
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
@@ -161,9 +141,7 @@ async def test_get_question_question_not_found():
         "question_ids": ["q1", "q2", "q3"],
     }
 
-    with patch(
-        "app.utils.db.db_instance.get_test", new_callable=AsyncMock
-    ) as mock_get_test:
+    with patch("app.utils.db.db_instance.get_test", new_callable=AsyncMock) as mock_get_test:
         mock_get_test.return_value = test_data
 
         with pytest.raises(HTTPException) as exc_info:
