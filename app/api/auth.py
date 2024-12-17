@@ -8,7 +8,8 @@ from hashlib import sha256
 from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.models.user import UserModel
+from fastapi.responses import RedirectResponse
+
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
 
@@ -17,6 +18,7 @@ router = APIRouter()
 CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
 REDIRECT_URI = "https://my.itmo.ru/login/callback"
+
 
 class LoginRequest(BaseModel):
     username: str
@@ -142,22 +144,35 @@ async def dashboard_stub():
 async def fill_user_info(user_info: dict):
     user_collection = db_instance.get_collection("users")
 
-    new_user = UserModel(
-        isu=user_info["isu"],
-        username=user_info["preferred_username"],
-        person_params={
-            "given_name": user_info.get("given_name"),
-            "family_name": user_info.get("family_name"),
-            "gender": user_info.get("gender"),
-            "birthdate": user_info.get("birthdate"),
-            "faculty": (
-                user_info.get("groups")[0]["faculty"]["name"].capitalize()
-                if user_info.get("groups")
-                else None
-            ),
-        },
-        photos={"logo": "stub"},
-        bio="",
+    selected_group = max(
+        user_info.get("groups", []), key=lambda g: g.get("course", 0), default=None
+    )
+    course = selected_group.get("course", None) if selected_group else None
+    faculty = (
+        selected_group.get("faculty", {}).get("name", "") if selected_group else ""
     )
 
-    await user_collection.insert_one(new_user.dict(by_alias=True))
+    new_user = {
+        "isu": user_info["isu"],
+        "username": "",
+        "bio": "",
+        "logo": "",
+        "photos": [],
+        "mainFeatures": [
+            {"text": "", "icon": "height"},
+            {"text": "", "icon": "zodiac_sign"},
+            {"text": "", "icon": "weight"},
+            {"text": user_info.get("gender", ""), "icon": "gender"},
+            {"text": user_info.get("birthdate", ""), "icon": "birthdate"},
+        ],
+        "interests": [],
+        "itmo": [
+            {"text": faculty, "icon": "faculty"},
+            {"text": str(course) if course else "", "icon": "course"},
+        ],
+        "gender_preferences": [],
+        "relationship_preferences": [],
+        "isStudent": True,
+    }
+
+    await user_collection.insert_one(new_user)

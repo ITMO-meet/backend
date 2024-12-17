@@ -11,6 +11,7 @@ from app.models.profileDetails import ProfileDetailsModel
 from app.setup_rollbar import rollbar_handler
 from uuid import uuid4
 from typing import List
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -39,7 +40,13 @@ async def select_preferences(payload: GenderPreferencesSelectionModel):
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.gender_preference": payload.gender_preference}},
+        {
+            "$set": {
+                "gender_preferences": [
+                    {"text": payload.gender_preference, "icon": "gender_preferences"}
+                ]
+            }
+        },
     )
 
     if update_result.modified_count == 0:
@@ -56,16 +63,22 @@ async def select_tags(payload: TagSelectionModel):
     user_collection = db_instance.get_collection("users")
     tags_collection = db_instance.get_collection("tags")
 
-    tag_objects = await tags_collection.find({"name": {"$in": payload.tags}}).to_list(
+    tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
+    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(
         length=None
     )
-    tag_ids = [str(tag["_id"]) for tag in tag_objects]
 
-    if not tag_ids:
-        raise HTTPException(status_code=404, detail="Tags not found")
+    if len(existing_tags) != len(tag_ids):
+        raise HTTPException(status_code=404, detail="Some tags do not exist")
+
+    interests = [
+        {"text": tag["name"], "icon": "tag"}
+        for tag in existing_tags
+        if tag["is_special"] == 0
+    ]
 
     update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": {"tags": tag_ids}}
+        {"isu": payload.isu}, {"$set": {"interests": interests}}
     )
 
     if update_result.modified_count == 0:
@@ -91,7 +104,7 @@ async def upload_logo(isu: int, file: UploadFile = File(...)):
     )
 
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos.logo": file_url}}
+        {"isu": isu}, {"$set": {"logo": file_url}}
     )
 
     if update_result.modified_count == 0:
@@ -121,7 +134,7 @@ async def upload_carousel(isu: int, files: List[UploadFile] = File(...)):
         carousel_urls.append(file_url)
 
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos.carousel": carousel_urls}}
+        {"isu": isu}, {"$set": {"photos": carousel_urls}}
     )
 
     if update_result.modified_count == 0:
@@ -142,13 +155,12 @@ async def add_profile_details(payload: ProfileDetailsModel):
 
     data = {
         "bio": payload.bio,
-        "person_params.weight": payload.weight,
-        "person_params.height": payload.height,
-        "person_params.hair_color": payload.hair_color,
-        "person_params.zodiac_sign": payload.zodiac_sign,
+        "mainFeatures.0.text": f"{payload.height} cm" if payload.height else "",
+        "mainFeatures.2.text": f"{payload.weight} kg" if payload.weight else "",
+        "mainFeatures.1.text": payload.zodiac_sign if payload.zodiac_sign else "",
     }
 
-    data = {k: v for k, v in data.items() if v is not None}
+    data = {k: v for k, v in data.items() if v}
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu}, {"$set": data}
@@ -156,7 +168,7 @@ async def add_profile_details(payload: ProfileDetailsModel):
 
     if update_result.modified_count == 0:
         raise HTTPException(
-            status_code=404, detail="User not found or profile not updated"
+            status_code=404, detail="User not found or profile details not updated"
         )
 
     return {"message": "Profile details updated successfully"}
@@ -179,18 +191,20 @@ async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
         )
 
     selected_tag_ids = [
-        str(tag["_id"]) for tag in special_tags if tag["name"] in user_selected_tags
+        {"text": tag["name"], "icon": "relationship_preferences"}
+        for tag in special_tags
+        if tag["name"] in user_selected_tags
     ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.relationship_preference": selected_tag_ids}},
+        {"$set": {"relationship_preferences": selected_tag_ids}},
     )
 
     if update_result.modified_count == 0:
         raise HTTPException(
             status_code=404,
-            detail="User not found or relationship preference not updated",
+            detail="User not found or relationship preferences not updated",
         )
 
     return {"message": "Relationship preference updated successfully"}

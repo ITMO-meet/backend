@@ -1,18 +1,19 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 
 
 class UserModel(BaseModel):
     isu: int
-    username: str
-    bio: Optional[str] = None
-    photos: Dict[str, Any] = {}
-    tags: Dict[str, List[Any]] = []
-    person_params: Dict[str, Any] = {}
-    preferences: Dict[str, Any] = {
-        "gender_preference": None,
-        "relationship_preference": [],
-    }
+    username: Optional[str] = ""
+    bio: Optional[str] = ""
+    logo: Optional[str] = ""
+    photos: List[str] = []
+    mainFeatures: List[Dict[str, str]] = []
+    interests: List[Dict[str, str]] = []
+    itmo: List[Dict[str, str]] = []
+    gender_preferences: List[Dict[str, str]] = []
+    relationship_preferences: List[Dict[str, str]] = []
+    isStudent: bool = True
 
     class Config:
         allow_population_by_field = True

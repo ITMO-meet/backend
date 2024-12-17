@@ -4,7 +4,6 @@ from app.models.tag import TagSelectionModel
 from app.models.user import GenderPreferencesSelectionModel, UsernameSelectionModel
 from app.setup_rollbar import rollbar_handler
 from bson import ObjectId
-from datetime import timedelta
 from uuid import uuid4
 
 router = APIRouter()
@@ -14,57 +13,12 @@ router = APIRouter()
 @rollbar_handler
 async def get_profile(isu: int):
     user_collection = db_instance.get_collection("users")
-    tags_collection = db_instance.get_collection("tags")
-
     user = await user_collection.find_one({"isu": isu})
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    tag_ids = [ObjectId(tag_id) for tag_id in user.get("tags", [])]
-    preference_ids = [
-        ObjectId(pref_id)
-        for pref_id in user["preferences"].get("relationship_preference", [])
-    ]
-
-    user_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
-    user_preferences = await tags_collection.find({"_id": {"$in": preference_ids}}).to_list(length=None)
-
-    tags = [tag["name"] for tag in user_tags]
-    relationship_preferences = [pref["name"] for pref in user_preferences]
-    gender_preference = user["preferences"].get("gender_preference")
-
-    logo_url = None
-    if "logo" in user["photos"]:
-        logo_url = db_instance.minio_instance.presigned_get_object(
-            db_instance.minio_bucket_name,
-            user["photos"]["logo"],
-            expires=timedelta(seconds=3600),
-        )
-
-    carousel_urls = [
-        db_instance.minio_instance.presigned_get_object(
-            db_instance.minio_bucket_name, photo, expires=timedelta(seconds=3600)
-        )
-        for photo in user["photos"].get("carousel", [])
-    ]
-
-    profile_data = {
-        "username": user["username"],
-        "bio": user.get("bio", ""),
-        "tags": tags,
-        "preferences": {
-            "relationship_preference": relationship_preferences,
-            "gender_preference": gender_preference
-        },
-        "photos": {"logo": logo_url, "carousel": carousel_urls},
-        "person_params": {
-            "zodiac_sign": user["person_params"].get("zodiac_sign"),
-            "height": user["person_params"].get("height"),
-            "weight": user["person_params"].get("weight"),
-        },
-    }
-
-    return {"profile": profile_data}
+    return {"profile": user}
 
 
 @router.put("/update_bio/{isu}")
@@ -86,8 +40,7 @@ async def update_bio(isu: int, bio: str):
 async def update_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
-        {"isu": payload.isu},
-        {"$set": {"username": payload.username}}
+        {"isu": payload.isu}, {"$set": {"username": payload.username}}
     )
 
     if update_result.modified_count == 0:
@@ -103,7 +56,7 @@ async def update_username(payload: UsernameSelectionModel):
 async def update_height(isu: int, height: float):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"person_params.height": height}}
+        {"isu": isu}, {"$set": {"mainFeatures.0.text": f"{height} cm"}}
     )
 
     if update_result.modified_count == 0:
@@ -119,7 +72,7 @@ async def update_height(isu: int, height: float):
 async def update_weight(isu: int, weight: float):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"person_params.weight": weight}}
+        {"isu": isu}, {"$set": {"mainFeatures.2.text": f"{weight} kg"}}
     )
 
     if update_result.modified_count == 0:
@@ -135,7 +88,7 @@ async def update_weight(isu: int, weight: float):
 async def update_zodiac_sign(isu: int, zodiac_sign: str):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"person_params.zodiac_sign": zodiac_sign}}
+        {"isu": isu}, {"$set": {"mainFeatures.1.text": zodiac_sign}}
     )
 
     if update_result.modified_count == 0:
@@ -145,6 +98,7 @@ async def update_zodiac_sign(isu: int, zodiac_sign: str):
 
     return {"message": "Zodiac sign updated successfully"}
 
+
 @router.put("/update_tags")
 @rollbar_handler
 async def update_tags(payload: TagSelectionModel):
@@ -152,20 +106,30 @@ async def update_tags(payload: TagSelectionModel):
     tags_collection = db_instance.get_collection("tags")
 
     tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
-    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
+    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(
+        length=None
+    )
 
     if len(existing_tags) != len(tag_ids):
         raise HTTPException(status_code=400, detail="Some tags do not exist")
 
+    interests = [
+        {"text": tag["name"], "icon": "tag"}
+        for tag in existing_tags
+        if tag["is_special"] == 0
+    ]
+
     update_result = await user_collection.update_one(
-        {"isu": payload.isu},
-        {"$set": {"tags": tag_ids}}
+        {"isu": payload.isu}, {"$set": {"interests": interests}}
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="User not found or tags not updated")
+        raise HTTPException(
+            status_code=404, detail="User not found or tags not updated"
+        )
 
     return {"message": "tags updated successfully"}
+
 
 @router.put("/update_relationship_preferences")
 @rollbar_handler
@@ -174,18 +138,29 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     tags_collection = db_instance.get_collection("tags")
 
     tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
-    special_tags = await tags_collection.find({"_id": {"$in": tag_ids}, "is_special": 1}).to_list(length=None)
+    special_tags = await tags_collection.find(
+        {"_id": {"$in": tag_ids}, "is_special": 1}
+    ).to_list(length=None)
 
     if len(special_tags) != len(tag_ids):
-        raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
+        raise HTTPException(
+            status_code=400, detail="Some tags do not exist or are not special tags"
+        )
+
+    relationship_preferences = [
+        {"text": str(tag["_id"]), "icon": "relationship_preferences"}
+        for tag in special_tags
+    ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.relationship_preference": tag_ids}}
+        {"$set": {"relationship_preferences": relationship_preferences}},
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="User not found or preferences not updated")
+        raise HTTPException(
+            status_code=404, detail="User not found or preferences not updated"
+        )
 
     return {"message": "relationship preferences updated successfully"}
 
@@ -204,20 +179,23 @@ async def update_logo(isu: int, file: UploadFile = File(...)):
     )
 
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos.logo": file_url}}
+        {"isu": isu}, {"$set": {"logo": file_url}}
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="User not found or logo not updated")
+        raise HTTPException(
+            status_code=404, detail="User not found or logo not updated"
+        )
 
     return {"message": "logo updated successfully", "logo_url": file_url}
 
+
 @router.put("/update_carousel_photo/{isu}")
 @rollbar_handler
-async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFile = File(...)):
+async def update_carousel_photo(
+    isu: int, old_photo_url: str, new_file: UploadFile = File(...)
+):
     user_collection = db_instance.get_collection("users")
-
-    db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, old_photo_url)
 
     file_extension = new_file.filename.split(".")[-1]
     new_filename = f"carousel/{isu}_{uuid4()}.{file_extension}"
@@ -226,23 +204,36 @@ async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFi
         new_filename,
         content_type=new_file.content_type or "application/octet-stream",
     )
+
     user = await user_collection.find_one({"isu": isu})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    carousel = user["photos"].get("carousel", [])
-    if old_photo_url not in carousel:
+    photos = user.get("photos", [])
+    if old_photo_url not in photos:
         raise HTTPException(status_code=404, detail="Photo not found in carousel")
+    
+    try:
+        db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, old_photo_url)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to delete old photo from storage")
 
-    carousel = [new_file_url if photo == old_photo_url else photo for photo in carousel]
+    updated_photos = [
+        new_file_url if photo == old_photo_url else photo for photo in photos
+    ]
+
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos.carousel": carousel}}
+        {"isu": isu}, {"$set": {"photos": updated_photos}}
     )
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Photo not updated in carousel")
 
-    return {"message": "carousel photo updated successfully", "new_photo_url": new_file_url}
+    return {
+        "message": "carousel photo updated successfully",
+        "new_photo_url": new_file_url,
+    }
+
 
 @router.delete("/delete_carousel_photo/{isu}")
 @rollbar_handler
@@ -250,25 +241,33 @@ async def delete_carousel_photo(isu: int, photo_url: str):
     user_collection = db_instance.get_collection("users")
 
     try:
-        db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, photo_url)
+        db_instance.minio_instance.remove_object(
+            db_instance.minio_bucket_name, photo_url
+        )
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to delete photo from storage")
+        raise HTTPException(
+            status_code=500, detail="Failed to delete photo from storage"
+        )
+
     user = await user_collection.find_one({"isu": isu})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    carousel = user["photos"].get("carousel", [])
-    if photo_url not in carousel:
+
+    photos = user.get("photos", [])
+    if photo_url not in photos:
         raise HTTPException(status_code=404, detail="Photo not found in carousel")
 
-    carousel = [photo for photo in carousel if photo != photo_url]
+    updated_photos = [photo for photo in photos if photo != photo_url]
 
     update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos.carousel": carousel}}
+        {"isu": isu}, {"$set": {"photos": updated_photos}}
     )
+
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Photo not removed from carousel")
 
     return {"message": "carousel photo deleted successfully"}
+
 
 @router.put("/update_gender_preference")
 @rollbar_handler
@@ -277,10 +276,18 @@ async def update_gender_preference(payload: GenderPreferencesSelectionModel):
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"preferences.gender_preference": payload.gender_preference}}
+        {
+            "$set": {
+                "gender_preferences": [
+                    {"text": payload.gender_preference, "icon": "gender_preferences"}
+                ]
+            }
+        },
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="User not found or gender preference not updated")
+        raise HTTPException(
+            status_code=404, detail="User not found or gender preference not updated"
+        )
 
     return {"message": "gender preference updated successfully"}

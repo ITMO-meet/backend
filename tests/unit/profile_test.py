@@ -114,7 +114,7 @@ async def test_update_height_success(app):
         assert response.status_code == 200
         assert response.json() == {"message": "height updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
-            {"isu": isu}, {"$set": {"person_params.height": height}}
+            {"isu": isu}, {"$set": {"mainFeatures.0.text": f"{height} cm"}}
         )
 
 
@@ -155,7 +155,7 @@ async def test_update_weight_success(app):
         assert response.status_code == 200
         assert response.json() == {"message": "weight updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
-            {"isu": isu}, {"$set": {"person_params.weight": weight}}
+            {"isu": isu}, {"$set": {"mainFeatures.2.text": f"{weight} kg"}}
         )
 
 
@@ -270,7 +270,7 @@ async def test_update_tags_user_not_found(app):
         mock_db_instance.get_collection.side_effect = get_collection_mock
 
         existing_tags = [
-            {"_id": ObjectId(tag_id), "name": f"tag_{tag_id}"} for tag_id in tags
+            {"_id": ObjectId(tag_id), "name": f"tag_{tag_id}", "is_special": 0} for tag_id in tags
         ]
         mock_tags_collection.find.return_value.to_list = AsyncMock(
             return_value=existing_tags
@@ -487,7 +487,7 @@ async def test_update_gender_preference_success(app):
         assert response.json() == {"message": "gender preference updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
             {"isu": payload["isu"]},
-            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+            {"$set": {"gender_preferences": [{"text": payload["gender_preference"], "icon": "gender_preferences"}]}},
         )
 
 
@@ -510,8 +510,8 @@ async def test_update_gender_preference_user_not_found(app):
             "detail": "User not found or gender preference not updated"
         }
         mock_user_collection.update_one.assert_called_once_with(
-            {"isu": payload["isu"]},
-            {"$set": {"preferences.gender_preference": payload["gender_preference"]}},
+        {"isu": payload["isu"]},
+        {"$set": {"gender_preferences": [{"text": payload["gender_preference"], "icon": "gender_preferences"}]}},
         )
 
 
@@ -530,7 +530,7 @@ async def test_update_carousel_photo_success(app):
 
     user_data = {
         "isu": isu,
-        "photos": {"carousel": [old_photo_url, "another_photo.png"]},
+        "photos": [old_photo_url, "another_photo.png"],
     }
 
     with patch("app.api.profile.db_instance") as mock_db_instance, patch(
@@ -631,7 +631,7 @@ async def test_delete_carousel_photo_success(app):
     isu = 123456
     photo_url = "photo_to_delete.png"
 
-    user_data = {"isu": isu, "photos": {"carousel": [photo_url, "another_photo.png"]}}
+    user_data = {"isu": isu, "photos": ["photo_to_delete.png", "another_photo.png"]}
 
     with patch("app.api.profile.db_instance") as mock_db_instance:
         mock_user_collection = AsyncMock()
