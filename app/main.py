@@ -9,9 +9,19 @@ from app.api import chats
 from app.api import stories
 from app.api import matches
 from app import setup_rollbar
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(tags.router)
 app.include_router(quizes.router, prefix="/tests")
 app.include_router(quizes_results.router, prefix="/results")
@@ -21,7 +31,6 @@ app.include_router(profile.router, prefix="/profile")
 app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
-
 
 
 def main():
