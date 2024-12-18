@@ -64,7 +64,6 @@ jobs:
     name: Deploy to Server
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: SSH and Deploy
@@ -77,4 +76,8 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             docker stop python-backend || true
             docker rm python-backend || true
-            docker run -d --name python-backend -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              docker run -d --name python-backend -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
+            else
+              docker run -d --name python-backend -p 9000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
+            fi
