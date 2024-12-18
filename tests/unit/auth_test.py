@@ -1,9 +1,8 @@
-from unittest.mock import AsyncMock, patch
+# tests/unit/auth_test.py
 
+from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import HTTPException
-from fastapi.responses import RedirectResponse
-
 from app.api.auth import (
     CLIENT_ID,
     PROVIDER_URL,
@@ -11,8 +10,14 @@ from app.api.auth import (
     generate_code_verifier,
     get_code_challenge,
     login_with_password,
+    LoginRequest
 )
 
+# Mock the rollbar_handler to prevent it from interfering with function calls
+@pytest.fixture(autouse=True)
+def mock_rollbar_handler():
+    with patch("app.api.auth.rollbar_handler", lambda x: x):
+        yield
 
 @pytest.fixture
 def mock_user_info():
@@ -34,9 +39,7 @@ def mock_dependencies():
         "app.api.auth.get_code_challenge"
     ) as mock_challenge, patch("app.api.auth.ClientSession") as mock_session, patch(
         "app.utils.db.db_instance"
-    ) as mock_db_instance, patch("app.api.auth.fill_user_info", new_callable=AsyncMock) as mock_fill_user_info, patch(
-        "app.api.auth.PROVIDER_URL", PROVIDER_URL
-    ), patch("app.api.auth.CLIENT_ID", CLIENT_ID), patch("app.api.auth.REDIRECT_URI", REDIRECT_URI):
+    ) as mock_db_instance, patch("app.api.auth.fill_user_info", new_callable=AsyncMock) as mock_fill_user_info:
         mock_verifier.return_value = "test_code_verifier"
         mock_challenge.return_value = "test_code_challenge"
 
@@ -96,11 +99,14 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
     mock_dependencies["mock_db_instance"].get_collection.return_value = user_collection_mock
 
-    response = await login_with_password("test_user", "test_password")
+    # Use the actual LoginRequest model
+    credentials = LoginRequest(username="test_user", password="test_password")
+    response = await login_with_password(credentials)
 
-    assert isinstance(response, RedirectResponse)
-    assert response.status_code == 307
-    assert response.headers["location"] == "/auth/register/select_username"
+    # Adjust assertions to match the actual return type (dict)
+    assert isinstance(response, dict)
+    assert response["redirect"] == "/auth/register/select_username"
+    assert response["isu"] == mock_user_info["isu"]
 
 
 @pytest.mark.asyncio
@@ -122,8 +128,11 @@ async def test_login_with_password_invalid_credentials(mock_user_info, mock_depe
     session_instance.get.side_effect = [auth_resp]
     session_instance.post.side_effect = [form_resp]
 
+    # Use the actual LoginRequest model with wrong password
+    credentials = LoginRequest(username="test_user", password="wrong_password")
+
     with pytest.raises(HTTPException) as exc_info:
-        await login_with_password("test_user", "wrong_password")
+        await login_with_password(credentials)
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail == "Login failed with provided credentials"
@@ -146,8 +155,11 @@ async def test_login_with_password_form_action_not_found(mock_user_info, mock_de
 
     session_instance.get.side_effect = [auth_resp]
 
+    # Use the actual LoginRequest model
+    credentials = LoginRequest(username="test_user", password="test_password")
+
     with pytest.raises(HTTPException) as exc_info:
-        await login_with_password("test_user", "test_password")
+        await login_with_password(credentials)
 
     assert exc_info.value.status_code == 500
     assert exc_info.value.detail == "Failed to find form action for login"
