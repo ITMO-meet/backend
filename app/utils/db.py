@@ -66,33 +66,31 @@ class Database:
         return self.environment in self.test_env
 
     @rollbar_handler
-    def setup_test_db(self):
+    async def setup_test_db(self):
         if not self.is_test_env:
             return
 
         # Cleanup test database
-        self.client.drop_database(self.db_name)
-
-        self.db["users"].delete_many({})
-        self.db["chats"].delete_many({})
-        self.db["messages"].delete_many({})
-        self.db["tags"].delete_many({})
-        self.db["questions"].delete_many({})
-        self.db["tests"].delete_many({})
-        self.db["results"].delete_many({})
-        self.db["stories"].delete_many({})
-        self.db["interactions"].delete_many({})
+        await self.db["users"].delete_many({})
+        await self.db["chats"].delete_many({})
+        await self.db["messages"].delete_many({})
+        await self.db["tags"].delete_many({})
+        await self.db["questions"].delete_many({})
+        await self.db["tests"].delete_many({})
+        await self.db["results"].delete_many({})
+        await self.db["stories"].delete_many({})
+        await self.db["interactions"].delete_many({})
 
         # Create sample data
-        special_tags, normal_tags = create_tags()
-        user_ids = create_users(normal_tags, special_tags)
-        chat_ids = create_chats(user_ids)
-        create_messages(chat_ids)
-        create_interactions(user_ids)
-        question_ids = create_questions()
-        test_ids = create_tests(question_ids)
-        create_results(user_ids, test_ids)
-        create_stories(user_ids)
+        special_tags, normal_tags = await create_tags(self.db)
+        user_ids = await create_users(self.db, normal_tags, special_tags)
+        chat_ids = await create_chats(self.db, user_ids)
+        await create_messages(self.db, chat_ids)
+        await create_interactions(self.db, user_ids)
+        question_ids = await create_questions(self.db)
+        test_ids = await create_tests(self.db, question_ids)
+        await create_results(self.db, test_ids)
+        await create_stories(self.db)
 
     @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):
