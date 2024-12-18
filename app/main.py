@@ -8,6 +8,7 @@ from app.api import profile
 from app.api import chats
 from app.api import stories
 from app.api import matches
+from app.api import db
 from app import setup_rollbar
 
 app = FastAPI()
@@ -21,6 +22,7 @@ app.include_router(profile.router, prefix="/profile")
 app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
+app.include_router(db.router, prefix="/db")
 
 
 def main():
