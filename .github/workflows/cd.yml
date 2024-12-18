@@ -79,5 +79,5 @@ jobs:
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
               docker run -d --name python-backend -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             else
-              docker run -d --name python-backend -p 9000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
+              docker run -d --name python-backend -p 7000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             fi
