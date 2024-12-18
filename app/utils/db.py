@@ -1,29 +1,53 @@
-from typing import List, Dict, Any, Optional
-from motor.motor_asyncio import AsyncIOMotorClient
+import datetime
 import os
+from typing import Any, Dict, List, Optional
+
+from bson import ObjectId
 from dotenv import load_dotenv
 from minio import Minio
-from bson import ObjectId
-import datetime
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.setup_rollbar import rollbar_handler
+
+from .fill_many import (
+    create_chats,
+    create_interactions,
+    create_messages,
+    create_questions,
+    create_results,
+    create_stories,
+    create_tags,
+    create_tests,
+    create_users,
+)
 
 load_dotenv()
 
 
 class Database:
+    test_env = ["dev", "test"]
+
     def __init__(self):
         mongo_uri = os.getenv("MONGO_URI")
         if not mongo_uri:
             raise ValueError("MONGO_URI not found in env")
 
         self.client = AsyncIOMotorClient(mongo_uri)
-        self.db = self.client["meet"]
+
+        self.environment = os.getenv("ENVIRONMENT", "prod")
+
+        if self.is_test_env:
+            self.db_name = "meet-test"
+            self.db = self.client[self.db_name]
+            self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME") + "-test"
+        else:
+            self.db_name = "meet"
+            self.db = self.client[self.db_name]
+            self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
 
         minio_endpoint = os.getenv("MINIO_ENDPOINT")
         minio_access_key = os.getenv("MINIO_ACCESS_KEY")
         minio_secret_key = os.getenv("MINIO_SECRET_KEY")
-        self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
         minio_use_ssl = os.getenv("MINIO_USE_SSL", "False").lower() == "true"
 
         if not all([minio_endpoint, minio_access_key, minio_secret_key, self.minio_bucket_name]):
@@ -33,6 +57,42 @@ class Database:
 
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
+
+        if self.is_test_env:
+            self.setup_test_db()
+
+    @property
+    def is_test_env(self) -> bool:
+        return self.environment in self.test_env
+
+    @rollbar_handler
+    def setup_test_db(self):
+        if not self.is_test_env:
+            return
+
+        # Cleanup test database
+        self.client.drop_database(self.db_name)
+
+        self.db["users"].delete_many({})
+        self.db["chats"].delete_many({})
+        self.db["messages"].delete_many({})
+        self.db["tags"].delete_many({})
+        self.db["questions"].delete_many({})
+        self.db["tests"].delete_many({})
+        self.db["results"].delete_many({})
+        self.db["stories"].delete_many({})
+        self.db["interactions"].delete_many({})
+
+        # Create sample data
+        special_tags, normal_tags = create_tags()
+        user_ids = create_users(normal_tags, special_tags)
+        chat_ids = create_chats(user_ids)
+        create_messages(chat_ids)
+        create_interactions(user_ids)
+        question_ids = create_questions()
+        test_ids = create_tests(question_ids)
+        create_results(user_ids, test_ids)
+        create_stories(user_ids)
 
     @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):

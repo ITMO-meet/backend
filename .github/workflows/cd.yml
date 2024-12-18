@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 env:
   MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -12,6 +13,7 @@ env:
   MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
   MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
   MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/dev' && 'dev' || 'prod' }}
 
 jobs:
   build-and-push:
@@ -53,6 +55,7 @@ jobs:
             MINIO_SECRET_KEY=${{ env.MINIO_SECRET_KEY }}
             MINIO_BUCKET_NAME=${{ env.MINIO_BUCKET_NAME }}
             MINIO_USE_SSL=${{ env.MINIO_USE_SSL }}
+            ENVIRONMENT=${{ env.ENVIRONMENT }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             ${{ secrets.DOCKER_USERNAME }}/python-backend:${{ github.sha }}
@@ -74,6 +77,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
             docker stop python-backend || true
             docker rm python-backend || true
-            # Run the new container with environment variables
-            # Adjust ports and environment variables as needed.
             docker run -d --name python-backend -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/python-backend:latest
