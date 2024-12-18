@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import HTTPException
 from app.api.auth import (
-    CLIENT_ID,
     PROVIDER_URL,
     REDIRECT_URI,
     generate_code_verifier,
