@@ -8,7 +8,6 @@ from hashlib import sha256
 from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from fastapi.responses import RedirectResponse
 
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
