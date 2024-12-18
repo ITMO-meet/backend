@@ -36,7 +36,7 @@ async def create_users(db, tags, special_tags):
                 "preferences": {"relationship_preference": relationship_preference, "gender_preference": "everyone"},
             }
         )
-    user_ids = await db["users"].insert_many(users).inserted_ids
+    user_ids = (await db["users"].insert_many(users)).inserted_ids
     print(f"Inserted users: {user_ids}")
     return user_ids
 
@@ -52,7 +52,7 @@ async def create_tags(db):
         tags.append(
             {"_id": ObjectId(), "name": f"Tag {i + 1}", "is_special": 0, "description": f"Description for Tag {i + 1}"}
         )
-    tag_ids = await db["tags"].insert_many(tags).inserted_ids
+    tag_ids = (await db["tags"].insert_many(tags)).inserted_ids
     print(f"Inserted tags: {tag_ids}")
     return tag_ids[:4], tag_ids[4:]  # Возвращаем специальные и обычные теги отдельно
 
@@ -70,7 +70,7 @@ async def create_chats(db, user_ids):
                 "status": "active" if i % 2 == 0 else "inactive",
             }
         )
-    chat_ids = await db["chats"].insert_many(chats).inserted_ids
+    chat_ids = (await db["chats"].insert_many(chats)).inserted_ids
     print(f"Inserted chats: {chat_ids}")
     return chat_ids
 
@@ -88,7 +88,7 @@ async def create_messages(db, chat_ids):
                 "timestamp": datetime.datetime.now(datetime.timezone.utc),
             }
         )
-    message_ids = await db["messages"].insert_many(messages).inserted_ids
+    message_ids = (await db["messages"].insert_many(messages)).inserted_ids
     print(f"Inserted messages: {message_ids}")
 
 
@@ -104,7 +104,7 @@ async def create_interactions(db, user_ids):
                 "timestamp": datetime.datetime.now(datetime.timezone.utc),
             }
         )
-    interaction_ids = await db["interactions"].insert_many(interactions).inserted_ids
+    interaction_ids = (await db["interactions"].insert_many(interactions)).inserted_ids
     print(f"Inserted interactions: {interaction_ids}")
 
 
@@ -112,7 +112,7 @@ async def create_questions(db):
     questions = []
     for i in range(10):
         questions.append({"_id": ObjectId(), "description": f"Question {i + 1}: Do you enjoy outdoor activities?"})
-    question_ids = await db["questions"].insert_many(questions).inserted_ids
+    question_ids = (await db["questions"].insert_many(questions)).inserted_ids
     print(f"Inserted questions: {question_ids}")
     return question_ids
 
@@ -128,7 +128,7 @@ async def create_tests(db, question_ids):
                 "question_ids": question_ids[:4],
             }
         )
-    test_ids = await db["tests"].insert_many(tests).inserted_ids
+    test_ids = (await db["tests"].insert_many(tests)).inserted_ids
     print(f"Inserted tests: {test_ids}")
     return test_ids
 
@@ -146,7 +146,7 @@ async def create_results(db, test_ids):
                 "completed": i % 2 == 0,
             }
         )
-    result_ids = await db["results"].insert_many(results).inserted_ids
+    result_ids = (await db["results"].insert_many(results)).inserted_ids
     print(f"Inserted results: {result_ids}")
 
 
@@ -161,5 +161,5 @@ async def create_stories(db):
                 "expiration_date": int(datetime.datetime.now().timestamp()) + 3600,
             }
         )
-    story_ids = await db["stories"].insert_many(stories).inserted_ids
+    story_ids = (await db["stories"].insert_many(stories)).inserted_ids
     print(f"Inserted stories: {story_ids}")
