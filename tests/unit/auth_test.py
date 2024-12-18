@@ -100,7 +100,7 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
     assert isinstance(response, RedirectResponse)
     assert response.status_code == 307
-    assert response.headers["location"] == "/auth/dashboard"
+    assert response.headers["location"] == "/auth/register/select_username"
 
 
 @pytest.mark.asyncio
