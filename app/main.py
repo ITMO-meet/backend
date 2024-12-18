@@ -34,3 +34,10 @@ app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
 app.include_router(db.router, prefix="/db")
+
+def main():
+    return "Hello, world!"
+
+
+if __name__ == "__main__":
+    main()
