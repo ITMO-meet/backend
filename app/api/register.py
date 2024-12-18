@@ -21,14 +21,10 @@ router = APIRouter()
 async def select_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
 
-    update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": {"username": payload.username}}
-    )
+    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": {"username": payload.username}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or username not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or username not updated")
 
     return {"message": "Username updated successfully"}
 
@@ -40,19 +36,11 @@ async def select_preferences(payload: GenderPreferencesSelectionModel):
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {
-            "$set": {
-                "gender_preferences": [
-                    {"text": payload.gender_preference, "icon": "gender_preferences"}
-                ]
-            }
-        },
+        {"$set": {"gender_preferences": [{"text": payload.gender_preference, "icon": "gender_preferences"}]}},
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or preference not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or preference not updated")
 
     return {"message": "Gender preference updated successfully"}
 
@@ -64,27 +52,17 @@ async def select_tags(payload: TagSelectionModel):
     tags_collection = db_instance.get_collection("tags")
 
     tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
-    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(
-        length=None
-    )
+    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
 
     if len(existing_tags) != len(tag_ids):
         raise HTTPException(status_code=404, detail="Some tags do not exist")
 
-    interests = [
-        {"text": tag["name"], "icon": "tag"}
-        for tag in existing_tags
-        if tag["is_special"] == 0
-    ]
+    interests = [{"text": tag["name"], "icon": "tag"} for tag in existing_tags if tag["is_special"] == 0]
 
-    update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": {"interests": interests}}
-    )
+    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": {"interests": interests}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or tags not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or tags not updated")
 
     return {"message": "Tags selected successfully, proceed to the next step"}
 
@@ -103,14 +81,10 @@ async def upload_logo(isu: int, file: UploadFile = File(...)):
         content_type=file.content_type or "application/octet-stream",
     )
 
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"logo": file_url}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"logo": file_url}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or logo not uploaded"
-        )
+        raise HTTPException(status_code=404, detail="User not found or logo not uploaded")
     return {"message": "Avatar uploaded successfully", "avatar_url": file_url}
 
 
@@ -133,14 +107,10 @@ async def upload_carousel(isu: int, files: List[UploadFile] = File(...)):
 
         carousel_urls.append(file_url)
 
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos": carousel_urls}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"photos": carousel_urls}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or carousel photos not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or carousel photos not updated")
 
     return {
         "message": "Carousel photos uploaded successfully",
@@ -162,14 +132,10 @@ async def add_profile_details(payload: ProfileDetailsModel):
 
     data = {k: v for k, v in data.items() if v}
 
-    update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": data}
-    )
+    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": data})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or profile details not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or profile details not updated")
 
     return {"message": "Profile details updated successfully"}
 

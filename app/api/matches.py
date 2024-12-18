@@ -61,11 +61,7 @@ async def get_matches(isu: int):
 
     user_ids = [like["user_id"] for like in likes]
 
-    users = (
-        await db_instance.db["users"]
-        .find({"isu": {"$in": user_ids}})
-        .to_list(length=None)
-    )
+    users = await db_instance.db["users"].find({"isu": {"$in": user_ids}}).to_list(length=None)
 
     result = []
     for user in users:

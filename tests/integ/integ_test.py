@@ -12,5 +12,3 @@ def test_rollbar_init():
     with patch("app.setup_rollbar.rollbar.init") as mock_init:
         setup_rollbar.init_rollbar()
         mock_init.assert_called_once()
-
-
