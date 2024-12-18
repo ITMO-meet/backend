@@ -57,9 +57,7 @@ async def login_with_password(username: str, password: str):
         form_regex = re.compile(r'<form\s+.*?\s+action="(?P<action>.*?)"', re.DOTALL)
         form_action_match = re.search(form_regex, resp_text)
         if not form_action_match:
-            raise HTTPException(
-                status_code=500, detail="Failed to find form action for login"
-            )
+            raise HTTPException(status_code=500, detail="Failed to find form action for login")
 
         form_action = html.unescape(form_action_match.group("action"))
 
@@ -81,9 +79,7 @@ async def login_with_password(username: str, password: str):
         redirect_params = urllib.parse.parse_qs(query)
         auth_code = redirect_params.get("code")
         if not auth_code:
-            raise HTTPException(
-                status_code=500, detail="Authorization code not found after login"
-            )
+            raise HTTPException(status_code=500, detail="Authorization code not found after login")
 
         token_resp = await session.post(
             f"{PROVIDER_URL}/protocol/openid-connect/token",
@@ -101,9 +97,7 @@ async def login_with_password(username: str, password: str):
         access_token = token_data.get("access_token")
 
         if not access_token:
-            raise HTTPException(
-                status_code=500, detail="Failed to retrieve access token"
-            )
+            raise HTTPException(status_code=500, detail="Failed to retrieve access token")
 
         user_info_url = f"{PROVIDER_URL}/protocol/openid-connect/userinfo"
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -111,9 +105,7 @@ async def login_with_password(username: str, password: str):
         user_resp = await session.get(user_info_url, headers=headers)
 
         if user_resp.status != 200:
-            raise HTTPException(
-                status_code=user_resp.status, detail="User info retrieval failed"
-            )
+            raise HTTPException(status_code=user_resp.status, detail="User info retrieval failed")
 
         user_info = await user_resp.json()
         user_collection = db_instance.get_collection("users")
@@ -138,13 +130,9 @@ async def dashboard_stub():
 async def fill_user_info(user_info: dict):
     user_collection = db_instance.get_collection("users")
 
-    selected_group = max(
-        user_info.get("groups", []), key=lambda g: g.get("course", 0), default=None
-    )
+    selected_group = max(user_info.get("groups", []), key=lambda g: g.get("course", 0), default=None)
     course = selected_group.get("course", None) if selected_group else None
-    faculty = (
-        selected_group.get("faculty", {}).get("name", "") if selected_group else ""
-    )
+    faculty = selected_group.get("faculty", {}).get("name", "") if selected_group else ""
 
     new_user = {
         "isu": user_info["isu"],

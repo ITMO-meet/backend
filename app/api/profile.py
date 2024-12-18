@@ -25,9 +25,7 @@ async def get_profile(isu: int):
 @rollbar_handler
 async def update_bio(isu: int, bio: str):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"bio": bio}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"bio": bio}})
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or bio not updated")
@@ -39,14 +37,10 @@ async def update_bio(isu: int, bio: str):
 @rollbar_handler
 async def update_username(payload: UsernameSelectionModel):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": {"username": payload.username}}
-    )
+    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": {"username": payload.username}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or username not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or username not updated")
 
     return {"message": "username updated successfully"}
 
@@ -55,14 +49,10 @@ async def update_username(payload: UsernameSelectionModel):
 @rollbar_handler
 async def update_height(isu: int, height: float):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"mainFeatures.0.text": f"{height} cm"}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.0.text": f"{height} cm"}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or height not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or height not updated")
 
     return {"message": "height updated successfully"}
 
@@ -71,14 +61,10 @@ async def update_height(isu: int, height: float):
 @rollbar_handler
 async def update_weight(isu: int, weight: float):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"mainFeatures.2.text": f"{weight} kg"}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.2.text": f"{weight} kg"}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or weight not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or weight not updated")
 
     return {"message": "weight updated successfully"}
 
@@ -87,14 +73,10 @@ async def update_weight(isu: int, weight: float):
 @rollbar_handler
 async def update_zodiac_sign(isu: int, zodiac_sign: str):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"mainFeatures.1.text": zodiac_sign}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.1.text": zodiac_sign}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or zodiac sign not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or zodiac sign not updated")
 
     return {"message": "Zodiac sign updated successfully"}
 
@@ -106,27 +88,17 @@ async def update_tags(payload: TagSelectionModel):
     tags_collection = db_instance.get_collection("tags")
 
     tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
-    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(
-        length=None
-    )
+    existing_tags = await tags_collection.find({"_id": {"$in": tag_ids}}).to_list(length=None)
 
     if len(existing_tags) != len(tag_ids):
         raise HTTPException(status_code=400, detail="Some tags do not exist")
 
-    interests = [
-        {"text": tag["name"], "icon": "tag"}
-        for tag in existing_tags
-        if tag["is_special"] == 0
-    ]
+    interests = [{"text": tag["name"], "icon": "tag"} for tag in existing_tags if tag["is_special"] == 0]
 
-    update_result = await user_collection.update_one(
-        {"isu": payload.isu}, {"$set": {"interests": interests}}
-    )
+    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": {"interests": interests}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or tags not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or tags not updated")
 
     return {"message": "tags updated successfully"}
 
@@ -138,19 +110,12 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     tags_collection = db_instance.get_collection("tags")
 
     tag_ids = [ObjectId(tag_id) for tag_id in payload.tags]
-    special_tags = await tags_collection.find(
-        {"_id": {"$in": tag_ids}, "is_special": 1}
-    ).to_list(length=None)
+    special_tags = await tags_collection.find({"_id": {"$in": tag_ids}, "is_special": 1}).to_list(length=None)
 
     if len(special_tags) != len(tag_ids):
-        raise HTTPException(
-            status_code=400, detail="Some tags do not exist or are not special tags"
-        )
+        raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
 
-    relationship_preferences = [
-        {"text": str(tag["_id"]), "icon": "relationship_preferences"}
-        for tag in special_tags
-    ]
+    relationship_preferences = [{"text": str(tag["_id"]), "icon": "relationship_preferences"} for tag in special_tags]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
@@ -158,9 +123,7 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or preferences not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or preferences not updated")
 
     return {"message": "relationship preferences updated successfully"}
 
@@ -178,23 +141,17 @@ async def update_logo(isu: int, file: UploadFile = File(...)):
         content_type=file.content_type or "application/octet-stream",
     )
 
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"logo": file_url}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"logo": file_url}})
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or logo not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or logo not updated")
 
     return {"message": "logo updated successfully", "logo_url": file_url}
 
 
 @router.put("/update_carousel_photo/{isu}")
 @rollbar_handler
-async def update_carousel_photo(
-    isu: int, old_photo_url: str, new_file: UploadFile = File(...)
-):
+async def update_carousel_photo(isu: int, old_photo_url: str, new_file: UploadFile = File(...)):
     user_collection = db_instance.get_collection("users")
 
     file_extension = new_file.filename.split(".")[-1]
@@ -212,19 +169,15 @@ async def update_carousel_photo(
     photos = user.get("photos", [])
     if old_photo_url not in photos:
         raise HTTPException(status_code=404, detail="Photo not found in carousel")
-    
+
     try:
         db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, old_photo_url)
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to delete old photo from storage")
 
-    updated_photos = [
-        new_file_url if photo == old_photo_url else photo for photo in photos
-    ]
+    updated_photos = [new_file_url if photo == old_photo_url else photo for photo in photos]
 
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos": updated_photos}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"photos": updated_photos}})
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Photo not updated in carousel")
@@ -241,13 +194,9 @@ async def delete_carousel_photo(isu: int, photo_url: str):
     user_collection = db_instance.get_collection("users")
 
     try:
-        db_instance.minio_instance.remove_object(
-            db_instance.minio_bucket_name, photo_url
-        )
+        db_instance.minio_instance.remove_object(db_instance.minio_bucket_name, photo_url)
     except Exception:
-        raise HTTPException(
-            status_code=500, detail="Failed to delete photo from storage"
-        )
+        raise HTTPException(status_code=500, detail="Failed to delete photo from storage")
 
     user = await user_collection.find_one({"isu": isu})
     if not user:
@@ -259,9 +208,7 @@ async def delete_carousel_photo(isu: int, photo_url: str):
 
     updated_photos = [photo for photo in photos if photo != photo_url]
 
-    update_result = await user_collection.update_one(
-        {"isu": isu}, {"$set": {"photos": updated_photos}}
-    )
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"photos": updated_photos}})
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Photo not removed from carousel")
@@ -276,18 +223,10 @@ async def update_gender_preference(payload: GenderPreferencesSelectionModel):
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {
-            "$set": {
-                "gender_preferences": [
-                    {"text": payload.gender_preference, "icon": "gender_preferences"}
-                ]
-            }
-        },
+        {"$set": {"gender_preferences": [{"text": payload.gender_preference, "icon": "gender_preferences"}]}},
     )
 
     if update_result.modified_count == 0:
-        raise HTTPException(
-            status_code=404, detail="User not found or gender preference not updated"
-        )
+        raise HTTPException(status_code=404, detail="User not found or gender preference not updated")
 
     return {"message": "gender preference updated successfully"}

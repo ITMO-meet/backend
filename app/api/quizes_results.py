@@ -9,14 +9,10 @@ router = APIRouter()
 @router.post("/answer/{result_id}")
 @rollbar_handler
 async def answer_question(result_id: str, payload: AnswerRequest):
-    updated_answers = await db_instance.update_result(
-        result_id, payload.question_index, payload.answer
-    )
+    updated_answers = await db_instance.update_result(result_id, payload.question_index, payload.answer)
 
     if updated_answers is None:
-        raise HTTPException(
-            status_code=404, detail="Result not found, test not finished"
-        )
+        raise HTTPException(status_code=404, detail="Result not found, test not finished")
 
     return {"updated_answers": updated_answers}
 

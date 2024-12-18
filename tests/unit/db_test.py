@@ -27,7 +27,6 @@ def test_get_collection(db_instance):
     assert collection.name == collection_name, "Collection name mismatch"
 
 
-
 @pytest.mark.asyncio
 async def test_get_available_tags():
     db_instance = Database()
@@ -55,7 +54,6 @@ async def test_get_available_tags():
     ]
 
     assert tags == expected_tags, "Tags returned do not match expected values"
-
 
 
 @pytest.mark.asyncio
@@ -119,9 +117,7 @@ async def test_create_question(db_instance):
 
     inserted_id = await db_instance.create_question(description)
 
-    mock_questions_collection.insert_one.assert_awaited_once_with(
-        {"description": description}
-    )
+    mock_questions_collection.insert_one.assert_awaited_once_with({"description": description})
 
     assert inserted_id == str(mock_insert_result.inserted_id), "Inserted ID mismatch"
 
@@ -141,9 +137,7 @@ async def test_get_question_by_id(db_instance):
 
     question = await db_instance.get_question_by_id(question_id)
 
-    mock_questions_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(question_id)}
-    )
+    mock_questions_collection.find_one.assert_awaited_once_with({"_id": ObjectId(question_id)})
 
     assert question == mock_question_document, "Question document mismatch"
 
@@ -195,13 +189,9 @@ async def test_update_result_success(db_instance):
 
     updated_answers = [-1, answer, -1]
 
-    returned_answers = await db_instance.update_result(
-        result_id, question_index, answer
-    )
+    returned_answers = await db_instance.update_result(result_id, question_index, answer)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
     mock_results_collection.update_one.assert_awaited_once_with(
         {"_id": ObjectId(result_id)}, {"$set": {"answers": updated_answers}}
     )
@@ -225,13 +215,9 @@ async def test_update_result_completed(db_instance):
     question_index = 1
     answer = 2
 
-    returned_answers = await db_instance.update_result(
-        result_id, question_index, answer
-    )
+    returned_answers = await db_instance.update_result(result_id, question_index, answer)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert returned_answers is None, "Expected None when test is already completed"
 
@@ -252,13 +238,9 @@ async def test_update_result_invalid_index(db_instance):
     question_index = 5
     answer = 2
 
-    returned_answers = await db_instance.update_result(
-        result_id, question_index, answer
-    )
+    returned_answers = await db_instance.update_result(result_id, question_index, answer)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert returned_answers is None, "Expected None when question index is invalid"
 
@@ -278,9 +260,7 @@ async def test_get_answers(db_instance):
 
     answers = await db_instance.get_answers(result_id)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert answers == mock_result["answers"], "Answers mismatch"
 
@@ -300,9 +280,7 @@ async def test_get_status(db_instance):
 
     status = await db_instance.get_status(result_id)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert status == mock_result["completed"], "Status mismatch"
 
@@ -319,18 +297,14 @@ async def test_complete_test(db_instance):
         "completed": False,
     }
 
-    expected_score = (
-        sum(mock_result["answers"]) / (len(mock_result["answers"]) * 6) * 100
-    )
+    expected_score = sum(mock_result["answers"]) / (len(mock_result["answers"]) * 6) * 100
 
     mock_results_collection.find_one = AsyncMock(return_value=mock_result)
     mock_results_collection.update_one = AsyncMock()
 
     score = await db_instance.complete_test(result_id)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
     mock_results_collection.update_one.assert_awaited_once_with(
         {"_id": ObjectId(result_id)},
         {"$set": {"score": expected_score, "completed": True}},
@@ -358,8 +332,6 @@ async def test_get_result(db_instance):
 
     result = await db_instance.get_result(result_id)
 
-    mock_results_collection.find_one.assert_awaited_once_with(
-        {"_id": ObjectId(result_id)}
-    )
+    mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert result == mock_result, "Result data mismatch"
