@@ -7,7 +7,7 @@ from hashlib import sha256
 
 from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
@@ -19,11 +19,14 @@ PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
 REDIRECT_URI = "https://my.itmo.ru/login/callback"
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 @rollbar_handler
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
     return re.sub("[^a-zA-Z0-9]+", "", code_verifier)
-
 
 @rollbar_handler
 def get_code_challenge(code_verifier: str):
@@ -32,9 +35,12 @@ def get_code_challenge(code_verifier: str):
     return code_challenge.replace("=", "")
 
 
-@router.get("/login_with_password")
+@router.post("/login_with_password")
 @rollbar_handler
-async def login_with_password(username: str, password: str):
+async def login_with_password(payload: LoginRequest):
+    username = payload.username
+    password = payload.password
+
     code_verifier = generate_code_verifier()
     code_challenge = get_code_challenge(code_verifier)
 
@@ -57,9 +63,7 @@ async def login_with_password(username: str, password: str):
         form_regex = re.compile(r'<form\s+.*?\s+action="(?P<action>.*?)"', re.DOTALL)
         form_action_match = re.search(form_regex, resp_text)
         if not form_action_match:
-            raise HTTPException(
-                status_code=500, detail="Failed to find form action for login"
-            )
+            raise HTTPException(status_code=500, detail="Failed to find form action for login")
 
         form_action = html.unescape(form_action_match.group("action"))
 
@@ -81,9 +85,7 @@ async def login_with_password(username: str, password: str):
         redirect_params = urllib.parse.parse_qs(query)
         auth_code = redirect_params.get("code")
         if not auth_code:
-            raise HTTPException(
-                status_code=500, detail="Authorization code not found after login"
-            )
+            raise HTTPException(status_code=500, detail="Authorization code not found after login")
 
         token_resp = await session.post(
             f"{PROVIDER_URL}/protocol/openid-connect/token",
@@ -101,9 +103,7 @@ async def login_with_password(username: str, password: str):
         access_token = token_data.get("access_token")
 
         if not access_token:
-            raise HTTPException(
-                status_code=500, detail="Failed to retrieve access token"
-            )
+            raise HTTPException(status_code=500, detail="Failed to retrieve access token")
 
         user_info_url = f"{PROVIDER_URL}/protocol/openid-connect/userinfo"
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -111,9 +111,7 @@ async def login_with_password(username: str, password: str):
         user_resp = await session.get(user_info_url, headers=headers)
 
         if user_resp.status != 200:
-            raise HTTPException(
-                status_code=user_resp.status, detail="User info retrieval failed"
-            )
+            raise HTTPException(status_code=user_resp.status, detail="User info retrieval failed")
 
         user_info = await user_resp.json()
         user_collection = db_instance.get_collection("users")
@@ -122,29 +120,24 @@ async def login_with_password(username: str, password: str):
         existing_user = await user_collection.find_one({"isu": user_info["isu"]})
 
         if existing_user:
-            return RedirectResponse("/auth/dashboard")
+            # Возвращаем JSON с redirect
+            return {"redirect": "/auth/dashboard", "isu": user_info["isu"]}
         else:
             await fill_user_info(user_info)
-            return RedirectResponse("/auth/register/select_username")
-
+            return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
 
 @router.get("/dashboard")
 @rollbar_handler
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
 
-
 @rollbar_handler
 async def fill_user_info(user_info: dict):
     user_collection = db_instance.get_collection("users")
 
-    selected_group = max(
-        user_info.get("groups", []), key=lambda g: g.get("course", 0), default=None
-    )
+    selected_group = max(user_info.get("groups", []), key=lambda g: g.get("course", 0), default=None)
     course = selected_group.get("course", None) if selected_group else None
-    faculty = (
-        selected_group.get("faculty", {}).get("name", "") if selected_group else ""
-    )
+    faculty = selected_group.get("faculty", {}).get("name", "") if selected_group else ""
 
     new_user = {
         "isu": user_info["isu"],

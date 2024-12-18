@@ -22,12 +22,9 @@ def app():
 async def test_create_story_success(app):
     isu = 123456
 
-    with patch.object(
-        db_instance, "get_collection"
-    ) as mock_get_collection, patch.object(
+    with patch.object(db_instance, "get_collection") as mock_get_collection, patch.object(
         db_instance, "upload_file_to_minio", new_callable=AsyncMock
     ) as mock_upload_file:
-
         mock_stories_coll = MagicMock()
         mock_get_collection.return_value = mock_stories_coll
 
@@ -55,12 +52,9 @@ async def test_create_story_success(app):
 async def test_create_story_failure(app):
     isu = 123456
 
-    with patch.object(
-        db_instance, "get_collection"
-    ) as mock_get_collection, patch.object(
+    with patch.object(db_instance, "get_collection") as mock_get_collection, patch.object(
         db_instance, "upload_file_to_minio", new_callable=AsyncMock
     ) as mock_upload_file_to_minio:
-
         mock_stories_collection = MagicMock()
         mock_get_collection.return_value = mock_stories_collection
 
@@ -106,9 +100,7 @@ async def test_get_story_success(app):
             "url": story_data["url"],
             "expiration_date": story_data["expiration_date"],
         }
-        mock_stories_collection.find_one.assert_called_once_with(
-            {"_id": ObjectId(payload["story_id"])}
-        )
+        mock_stories_collection.find_one.assert_called_once_with({"_id": ObjectId(payload["story_id"])})
 
 
 @pytest.mark.asyncio
@@ -126,9 +118,7 @@ async def test_get_story_not_found(app):
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story not found"}
-        mock_stories_collection.find_one.assert_called_once_with(
-            {"_id": ObjectId(payload["story_id"])}
-        )
+        mock_stories_collection.find_one.assert_called_once_with({"_id": ObjectId(payload["story_id"])})
 
 
 @pytest.mark.asyncio
@@ -150,9 +140,7 @@ async def test_get_user_stories_success(app):
             response = await ac.get(f"/get_user_stories/{isu}")
 
         assert response.status_code == 200
-        assert response.json() == {
-            "stories": [str(story["_id"]) for story in stories_data]
-        }
+        assert response.json() == {"stories": [str(story["_id"]) for story in stories_data]}
         mock_stories_collection.find.assert_called_once_with({"isu": isu})
 
 

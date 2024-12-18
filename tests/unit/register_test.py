@@ -6,7 +6,8 @@ from app.utils.db import db_instance
 import os
 from bson import ObjectId
 
-os.environ['TESTING'] = 'True'
+os.environ["TESTING"] = "True"
+
 
 @pytest.mark.asyncio
 async def test_select_tags_success():
@@ -16,9 +17,7 @@ async def test_select_tags_success():
     with patch.object(
         db_instance,
         "get_collection",
-        side_effect=lambda name: (
-            mock_tags_collection if name == "tags" else mock_users_collection
-        ),
+        side_effect=lambda name: (mock_tags_collection if name == "tags" else mock_users_collection),
     ):
         mock_cursor = MagicMock()
         mock_cursor.to_list = AsyncMock(
@@ -37,9 +36,7 @@ async def test_select_tags_success():
                 json={"isu": 12345, "tags": ["5f43a1c667a9032a6e63d9f1", "5f43a1c667a9032a6e63d9f2"]},
             )
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Tags selected successfully, proceed to the next step"
-    }
+    assert response.json() == {"message": "Tags selected successfully, proceed to the next step"}
 
 
 @pytest.mark.asyncio
@@ -50,9 +47,7 @@ async def test_select_tags_not_found():
     with patch.object(
         db_instance,
         "get_collection",
-        side_effect=lambda name: (
-            mock_tags_collection if name == "tags" else mock_users_collection
-        ),
+        side_effect=lambda name: (mock_tags_collection if name == "tags" else mock_users_collection),
     ):
         mock_cursor = MagicMock()
         mock_cursor.to_list = AsyncMock(return_value=[])
@@ -74,9 +69,7 @@ async def test_select_tags_not_found():
 async def test_add_profile_details_success():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         mock_update_result = MagicMock()
         mock_update_result.modified_count = 1
         mock_users_collection.update_one.return_value = mock_update_result
@@ -101,9 +94,7 @@ async def test_add_profile_details_success():
 async def test_add_profile_details_user_not_found():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         mock_update_result = MagicMock()
         mock_update_result.modified_count = 0
         mock_users_collection.update_one.return_value = mock_update_result
@@ -128,9 +119,7 @@ async def test_add_profile_details_user_not_found():
 async def test_upload_logo_success():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         with patch.object(
             db_instance,
             "upload_file_to_minio",
@@ -143,9 +132,7 @@ async def test_upload_logo_success():
             async with AsyncClient(app=app, base_url="http://test") as ac:
                 files = {"file": ("logo.jpg", b"fake image data", "image/jpeg")}
                 params = {"isu": 123456}
-                response = await ac.post(
-                    "/auth/register/upload_logo", params=params, files=files
-                )
+                response = await ac.post("/auth/register/upload_logo", params=params, files=files)
 
             assert response.status_code == 200
             assert response.json() == {
@@ -158,9 +145,7 @@ async def test_upload_logo_success():
 async def test_upload_logo_user_not_found():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         with patch.object(
             db_instance,
             "upload_file_to_minio",
@@ -173,9 +158,7 @@ async def test_upload_logo_user_not_found():
             async with AsyncClient(app=app, base_url="http://test") as ac:
                 files = {"file": ("logo.jpg", b"fake image data", "image/jpeg")}
                 params = {"isu": 123456}
-                response = await ac.post(
-                    "/auth/register/upload_logo", params=params, files=files
-                )
+                response = await ac.post("/auth/register/upload_logo", params=params, files=files)
 
             assert response.status_code == 404
             assert response.json() == {"detail": "User not found or logo not uploaded"}
@@ -185,9 +168,7 @@ async def test_upload_logo_user_not_found():
 async def test_upload_carousel_success():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         with patch.object(db_instance, "upload_file_to_minio") as mock_upload:
             mock_file_urls = [
                 "http://minio.test/carousel/image1.jpg",
@@ -207,9 +188,7 @@ async def test_upload_carousel_success():
                     ("files", ("image3.jpg", b"fake image data 3", "image/jpeg")),
                 ]
                 params = {"isu": 123456}
-                response = await ac.post(
-                    "/auth/register/upload_carousel", params=params, files=files
-                )
+                response = await ac.post("/auth/register/upload_carousel", params=params, files=files)
 
             assert response.status_code == 200
             assert response.json() == {
@@ -224,9 +203,7 @@ async def test_upload_carousel_success():
 async def test_upload_carousel_user_not_found():
     mock_users_collection = AsyncMock()
 
-    with patch.object(
-        db_instance, "get_collection", return_value=mock_users_collection
-    ):
+    with patch.object(db_instance, "get_collection", return_value=mock_users_collection):
         with patch.object(db_instance, "upload_file_to_minio") as mock_upload:
             mock_file_urls = [
                 "http://minio.test/carousel/image1.jpg",
@@ -246,14 +223,10 @@ async def test_upload_carousel_user_not_found():
                     ("files", ("image3.jpg", b"fake image data 3", "image/jpeg")),
                 ]
                 params = {"isu": 123456}
-                response = await ac.post(
-                    "/auth/register/upload_carousel", params=params, files=files
-                )
+                response = await ac.post("/auth/register/upload_carousel", params=params, files=files)
 
             assert response.status_code == 404
-            assert response.json() == {
-                "detail": "User not found or carousel photos not updated"
-            }
+            assert response.json() == {"detail": "User not found or carousel photos not updated"}
 
 
 @pytest.mark.asyncio
@@ -350,9 +323,7 @@ async def test_select_tags_user_not_found():
     with patch.object(
         db_instance,
         "get_collection",
-        side_effect=lambda name: (
-            mock_tags_collection if name == "tags" else mock_users_collection
-        ),
+        side_effect=lambda name: (mock_tags_collection if name == "tags" else mock_users_collection),
     ):
         mock_cursor = MagicMock()
         mock_cursor.to_list = AsyncMock(

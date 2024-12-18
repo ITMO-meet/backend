@@ -27,9 +27,7 @@ async def start_test(test_id: str, payload: StartTestRequest):
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
 
-    result_id = await db_instance.create_result(
-        payload.user_id, test_id, len(test["question_ids"])
-    )
+    result_id = await db_instance.create_result(payload.user_id, test_id, len(test["question_ids"]))
 
     if not result_id:
         raise HTTPException(status_code=500, detail="Error creating test results")
