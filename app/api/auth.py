@@ -18,18 +18,17 @@ CLIENT_ID = "student-personal-cabinet"
 PROVIDER_URL = "https://id.itmo.ru/auth/realms/itmo"
 REDIRECT_URI = "https://my.itmo.ru/login/callback"
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+
 
 @rollbar_handler
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
     return re.sub("[^a-zA-Z0-9]+", "", code_verifier)
+
 
 @rollbar_handler
 def get_code_challenge(code_verifier: str):
@@ -147,10 +146,12 @@ async def login_with_password(payload: LoginRequest):
             await fill_user_info(user_info)
             return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
 
+
 @router.get("/dashboard")
 @rollbar_handler
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
+
 
 @rollbar_handler
 async def fill_user_info(user_info: dict):
