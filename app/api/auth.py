@@ -9,8 +9,8 @@ from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 
-from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 
 router = APIRouter()
 
@@ -35,6 +35,24 @@ def get_code_challenge(code_verifier: str):
 @router.get("/login_with_password")
 @rollbar_handler
 async def login_with_password(username: str, password: str):
+    # Test user shortcut
+    if username == "999999" and password == "test":
+        # Mock user info
+        user_info = {
+            "isu": 999999,  # some mock isu
+            "gender": "other",
+            "birthdate": "2000-01-01",
+            "groups": [{"course": 4, "faculty": {"name": "Test Faculty"}}],
+        }
+
+        user_collection = db_instance.get_collection("users")
+        existing_user = await user_collection.find_one({"isu": user_info["isu"]})
+
+        if not existing_user:
+            await fill_user_info(user_info)
+        return RedirectResponse("/auth/dashboard")
+
+    # Actual Keycloak logic below:
     code_verifier = generate_code_verifier()
     code_challenge = get_code_challenge(code_verifier)
 
