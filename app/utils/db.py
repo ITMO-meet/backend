@@ -59,7 +59,8 @@ class Database:
             self.minio_instance.make_bucket(self.minio_bucket_name)
 
         if self.is_test_env:
-            self.setup_test_db()
+            import asyncio
+            asyncio.run(self.setup_test_db())
 
     @property
     def is_test_env(self) -> bool:
