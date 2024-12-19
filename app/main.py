@@ -20,7 +20,7 @@ app.include_router(tags.router)
 app.add_middleware(
 
     CORSMiddleware,
-    allow_origins=["http://localhost:3070"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
