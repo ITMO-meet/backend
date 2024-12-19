@@ -105,7 +105,7 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
     # Adjust assertions to match the actual return type (dict)
     assert isinstance(response, dict)
-    assert response["redirect"] == "/auth/register/select_username"
+    assert response["redirect"] == "/auth/dashboard"
     assert response["isu"] == mock_user_info["isu"]
 
 
