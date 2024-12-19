@@ -1,5 +1,6 @@
-from unittest.mock import AsyncMock, patch
+# tests/unit/auth_test.py
 
+from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import HTTPException
 
@@ -10,8 +11,14 @@ from app.api.auth import (
     generate_code_verifier,
     get_code_challenge,
     login_with_password,
+    LoginRequest
 )
 
+# Mock the rollbar_handler to prevent it from interfering with function calls
+@pytest.fixture(autouse=True)
+def mock_rollbar_handler():
+    with patch("app.api.auth.rollbar_handler", lambda x: x):
+        yield
 
 # Mock the rollbar_handler to prevent it from interfering with function calls
 @pytest.fixture(autouse=True)
