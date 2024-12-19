@@ -9,8 +9,8 @@ from aiohttp import ClientSession
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 
 router = APIRouter()
 
@@ -23,10 +23,12 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+
 @rollbar_handler
 def generate_code_verifier():
     code_verifier = urlsafe_b64encode(os.urandom(40)).decode("utf-8")
     return re.sub("[^a-zA-Z0-9]+", "", code_verifier)
+
 
 @rollbar_handler
 def get_code_challenge(code_verifier: str):
@@ -41,6 +43,24 @@ async def login_with_password(payload: LoginRequest):
     username = payload.username
     password = payload.password
 
+    # Test user shortcut
+    if username == "999999" and password == "test":
+        # Mock user info
+        user_info = {
+            "isu": 999999,  # some mock isu
+            "gender": "other",
+            "birthdate": "2000-01-01",
+            "groups": [{"course": 4, "faculty": {"name": "Test Faculty"}}],
+        }
+
+        user_collection = db_instance.get_collection("users")
+        existing_user = await user_collection.find_one({"isu": user_info["isu"]})
+
+        if not existing_user:
+            await fill_user_info(user_info)
+        return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
+
+    # Actual Keycloak logic below:
     code_verifier = generate_code_verifier()
     code_challenge = get_code_challenge(code_verifier)
 
@@ -126,10 +146,12 @@ async def login_with_password(payload: LoginRequest):
             await fill_user_info(user_info)
             return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
 
+
 @router.get("/dashboard")
 @rollbar_handler
 async def dashboard_stub():
     return {"message": "Welcome to the dating service!"}
+
 
 @rollbar_handler
 async def fill_user_info(user_info: dict):

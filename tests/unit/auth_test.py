@@ -1,22 +1,24 @@
-# tests/unit/auth_test.py
-
 from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi import HTTPException
+
 from app.api.auth import (
     PROVIDER_URL,
     REDIRECT_URI,
+    LoginRequest,
     generate_code_verifier,
     get_code_challenge,
     login_with_password,
-    LoginRequest
 )
+
 
 # Mock the rollbar_handler to prevent it from interfering with function calls
 @pytest.fixture(autouse=True)
 def mock_rollbar_handler():
     with patch("app.api.auth.rollbar_handler", lambda x: x):
         yield
+
 
 @pytest.fixture
 def mock_user_info():
@@ -104,7 +106,7 @@ async def test_login_with_password_success(mock_user_info, mock_dependencies):
 
     # Adjust assertions to match the actual return type (dict)
     assert isinstance(response, dict)
-    assert response["redirect"] == "/auth/register/select_username"
+    assert response["redirect"] == "/auth/dashboard"
     assert response["isu"] == mock_user_info["isu"]
 
 

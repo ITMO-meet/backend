@@ -1,24 +1,14 @@
 from fastapi import FastAPI
-from app.api import tags
-from app.api import quizes
-from app.api import quizes_results
-from app.api import auth
-from app.api import register
-from app.api import profile
-from app.api import chats
-from app.api import stories
-from app.api import matches
-from app.api import db
-from app import setup_rollbar
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import setup_rollbar
+from app.api import auth, chats, db, matches, profile, quizes, quizes_results, register, stories, tags
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
 app.include_router(tags.router)
 
 app.add_middleware(
-
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -34,6 +24,7 @@ app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
 app.include_router(db.router, prefix="/db")
+
 
 def main():
     return "Hello, world!"
