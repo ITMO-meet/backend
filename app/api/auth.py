@@ -36,7 +36,7 @@ def get_code_challenge(code_verifier: str):
 @rollbar_handler
 async def login_with_password(username: str, password: str):
     # Test user shortcut
-    if username == "test" and password == "test":
+    if username == "999999" and password == "test":
         # Mock user info
         user_info = {
             "isu": 999999,  # some mock isu
