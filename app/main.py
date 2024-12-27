@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import setup_rollbar
-from app.api import auth, chats, db, matches, profile, quizes, quizes_results, register, stories, tags
+from app.api import auth, chats, db, matches, profile, quizes, quizes_results, register, stories, tags, calendar
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
@@ -23,6 +23,7 @@ app.include_router(profile.router, prefix="/profile")
 app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
+app.include_router(calendar.router, prefix="/calendar")
 app.include_router(db.router, prefix="/db")
 
 
