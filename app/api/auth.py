@@ -192,7 +192,7 @@ async def fill_user_info(user_info: dict):
 async def update_user_schedule(isu: int, token: str):
     try:
         async with ClientSession() as session:
-            url = f"https://my.itmo.ru/api/schedule/schedule/personal?date_start=2024-09-01&date_end=2025-02-01"
+            url = "https://my.itmo.ru/api/schedule/schedule/personal?date_start=2024-09-01&date_end=2025-02-01"
             headers = {"Authorization": f"Bearer {token}", "Accept-Language": "ru"}
             async with session.get(url, headers=headers) as response:
                 if response.status != 200:

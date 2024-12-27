@@ -1,7 +1,7 @@
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from app.utils.db import db_instance
 from app.api.calendar import router
 
@@ -14,7 +14,7 @@ def app():
 @pytest.mark.asyncio
 async def test_get_calendar_success(app):
     isu=123456
-    mock_schedule_data = {"data": {"1": {"9:00": "something1"}, "1": {"10:00": "something2"}}}
+    mock_schedule_data = {"data": {"1": {"9:00": "something1"}, "2": {"10:00": "something2"}}}
 
     with patch.object(db_instance, "get_json_from_minio", return_value=mock_schedule_data) as mock_db_call:
         async with AsyncClient(app=app, base_url="http://test") as ac:
