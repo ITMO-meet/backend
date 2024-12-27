@@ -17,6 +17,8 @@ async def get_profile(isu: int):
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    user["_id"] = str(user["_id"])
 
     return {"profile": user}
 
