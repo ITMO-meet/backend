@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from app.utils.db import Database
 from bson import ObjectId
 
@@ -335,3 +335,101 @@ async def test_get_result(db_instance):
     mock_results_collection.find_one.assert_awaited_once_with({"_id": ObjectId(result_id)})
 
     assert result == mock_result, "Result data mismatch"
+
+
+@pytest.fixture
+def db_instance_for_minio():
+    db = Database()
+    db.minio_instance = MagicMock()
+    db.minio_calendar_instance = MagicMock()
+    return db
+
+
+def test_upload_file_to_minio(db_instance_for_minio):
+    data = b"something"
+    filename = "test.txt"
+    content_type = "text/plain"
+
+    result = db_instance_for_minio.upload_file_to_minio(data, filename, content_type)
+
+    db_instance_for_minio.minio_instance.put_object.assert_called_once_with(
+        db_instance_for_minio.minio_bucket_name,
+        filename,
+        data,
+        length=-1,
+        part_size=10 * 1024 * 1024,
+        content_type=content_type,
+    )
+
+    assert result == f"{db_instance_for_minio.minio_bucket_name}/{filename}"
+
+
+def test_uplod_json_to_minio(db_instance_for_minio):
+    data = {"key": "value"}
+    filename = "test.json"
+
+    result = db_instance_for_minio.uplod_json_to_minio(data, filename)
+
+    args, kwargs = db_instance_for_minio.minio_calendar_instance.put_object.call_args
+    assert args[0] == db_instance_for_minio.minio_calendar_bucket_name
+    assert args[1] == filename
+    assert kwargs["content_type"] == "application/json"
+
+    assert result == f"{db_instance_for_minio.minio_calendar_bucket_name}/{filename}"
+
+
+def test_get_json_from_minio_success(db_instance_for_minio):
+    filename = "schedule_123.json"
+    mock_json_data = {"a": "b"}
+
+    mock_response = MagicMock()
+    mock_response.read = MagicMock()
+    def mock_json_load(stream):
+        return mock_json_data
+
+    db_instance_for_minio.minio_calendar_instance.get_object.return_value = mock_response
+
+    with patch("json.load", side_effect=mock_json_load):
+        result = db_instance_for_minio.get_json_from_minio(filename)
+
+    db_instance_for_minio.minio_calendar_instance.get_object.assert_called_once_with(
+        db_instance_for_minio.minio_calendar_bucket_name,
+        filename,
+    )
+    mock_response.close.assert_called_once()
+    mock_response.release_conn.assert_called_once()
+
+    assert result == mock_json_data
+
+
+def test_get_json_from_minio_failure(db_instance_for_minio):
+    filename = "no.json"
+
+    db_instance_for_minio.minio_calendar_instance.get_object.side_effect = Exception("File not found")
+
+    with pytest.raises(ValueError) as exc_info:
+        db_instance_for_minio.get_json_from_minio(filename)
+
+    assert "Failed to get json calendar from minio: File not found" in str(exc_info.value)
+
+
+def test_delete_json_from_minio_success(db_instance_for_minio):
+    filename = "test.json"
+
+    db_instance_for_minio.delete_json_from_minio(filename)
+
+    db_instance_for_minio.minio_calendar_instance.remove_object.assert_called_once_with(
+        db_instance_for_minio.minio_calendar_bucket_name,
+        filename,
+    )
+
+
+def test_delete_json_from_minio_failure(db_instance_for_minio):
+    filename = "no.json"
+
+    db_instance_for_minio.minio_calendar_instance.remove_object.side_effect = Exception("Remove error")
+
+    with pytest.raises(ValueError) as exc_info:
+        db_instance_for_minio.delete_json_from_minio(filename)
+
+    assert "Failed to remove calendar data from minio: Remove error" in str(exc_info.value)

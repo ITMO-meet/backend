@@ -1,5 +1,7 @@
 import datetime
 import os
+import io
+import json
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
@@ -40,10 +42,12 @@ class Database:
             self.db_name = "meet-test"
             self.db = self.client[self.db_name]
             self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME") + "-test"
+            self.minio_calendar_bucket_name = os.getenv("MINIO_CALENDAR_BUCKET_NAME") + "-test"
         else:
             self.db_name = "meet"
             self.db = self.client[self.db_name]
             self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
+            self.minio_calendar_bucket_name = os.getenv("MINIO_CALENDAR_BUCKET_NAME")
 
         minio_endpoint = os.getenv("MINIO_ENDPOINT")
         minio_access_key = os.getenv("MINIO_ACCESS_KEY")
@@ -57,6 +61,17 @@ class Database:
 
         if not self.minio_instance.bucket_exists(self.minio_bucket_name):
             self.minio_instance.make_bucket(self.minio_bucket_name)
+
+        minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
+        minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
+        
+        if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
+            raise ValueError("MINIO calendar not found in env")
+        
+        self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
+
+        if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
+            self.minio_calendar_instance.make_bucket(self.minio_calendar_bucket_name)
 
         if self.is_test_env:
             import asyncio
@@ -104,6 +119,47 @@ class Database:
             content_type=content_type,
         )
         return f"{self.minio_bucket_name}/{filename}"
+    
+    @rollbar_handler
+    def uplod_json_to_minio(self, data: dict, filename):
+        json_data = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        json_stream = io.BytesIO(json_data)
+
+        self.minio_calendar_instance.put_object(
+            self.minio_calendar_bucket_name,
+            filename,
+            json_stream,
+            len(json_data),
+            content_type="application/json",
+        )
+        
+        return f"{self.minio_calendar_bucket_name}/{filename}"
+    
+    @rollbar_handler
+    def get_json_from_minio(self, filename) -> dict:
+        try:
+            response = self.minio_calendar_instance.get_object(
+                self.minio_calendar_bucket_name,
+                filename,
+            )
+            json_data = json.load(response)
+            
+            response.close()
+            response.release_conn()
+
+            return json_data
+        except Exception as e:
+            raise ValueError(f"Failed to get json calendar from minio: {e}")
+        
+    @rollbar_handler
+    def delete_json_from_minio(self, filename):
+        try:
+            self.minio_calendar_instance.remove_object(
+                self.minio_calendar_bucket_name,
+                filename,
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to remove calendar data from minio: {e}")
 
     @rollbar_handler
     def get_collection(self, collection_name):
