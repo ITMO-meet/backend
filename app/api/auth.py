@@ -137,6 +137,8 @@ async def login_with_password(payload: LoginRequest):
         user_collection = db_instance.get_collection("users")
         user_resp.close()
 
+        await update_user_schedule(user_info["isu"], access_token)
+
         existing_user = await user_collection.find_one({"isu": user_info["isu"]})
 
         if existing_user:
@@ -185,3 +187,23 @@ async def fill_user_info(user_info: dict):
     }
 
     await user_collection.insert_one(new_user)
+
+@rollbar_handler
+async def update_user_schedule(isu: int, token: str):
+    try:
+        async with ClientSession() as session:
+            url = f"https://my.itmo.ru/api/schedule/schedule/personal?date_start=2024-09-01&date_end=2025-02-01"
+            headers = {"Authorization": f"Bearer {token}", "Accept-Language": "ru"}
+            async with session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Failed to fetch schedulefrom itmo api. Maybe token is dead?",
+                    )
+                calendar_data = await response.json()
+
+                filename = f"schedule_{isu}.json"
+                db_instance.delete_json_from_minio(filename)
+                db_instance.uplod_json_to_minio(calendar_data, filename)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating schedule: {e}")
