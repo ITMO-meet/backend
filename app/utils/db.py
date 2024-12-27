@@ -42,6 +42,7 @@ class Database:
             self.db_name = "meet-test"
             self.db = self.client[self.db_name]
             self.minio_bucket_name = os.getenv("MINIO_BUCKET_NAME") + "-test"
+            self.minio_calendar_bucket_name = os.getenv("MINIO_CALENDAR_BUCKET_NAME") + "-test"
         else:
             self.db_name = "meet"
             self.db = self.client[self.db_name]
@@ -63,6 +64,10 @@ class Database:
 
         minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
         minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
+        
+        if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
+            raise ValueError("MINIO calendar not found in env")
+        
         self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
 
         if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
