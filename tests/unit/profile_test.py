@@ -293,7 +293,10 @@ async def test_update_relationship_preferences_success(app):
 
         mock_db_instance.get_collection.side_effect = get_collection_mock
 
-        special_tags = [{"_id": ObjectId(tag_id), "is_special": 1} for tag_id in tags]
+        special_tags = [
+            {"_id": ObjectId(tag_id), "name": f"special_tag_{tag_id}", "is_special": 1}
+            for tag_id in tags
+        ]        
         mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=special_tags)
 
         mock_user_collection.update_one.return_value.modified_count = 1
@@ -355,7 +358,10 @@ async def test_update_relationship_preferences_user_not_found(app):
 
         mock_db_instance.get_collection.side_effect = get_collection_mock
 
-        special_tags = [{"_id": ObjectId(tag_id), "is_special": 1} for tag_id in tags]
+        special_tags = [
+            {"_id": ObjectId(tag_id), "name": f"special_tag_{tag_id}", "is_special": 1}
+            for tag_id in tags
+        ]
         mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=special_tags)
 
         mock_user_collection.update_one.return_value.modified_count = 0

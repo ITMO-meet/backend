@@ -8,6 +8,7 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from minio import Minio
 from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import timedelta
 
 from app.setup_rollbar import rollbar_handler
 
@@ -107,6 +108,14 @@ class Database:
         test_ids = await create_tests(self.db, question_ids)
         await create_results(self.db, test_ids)
         await create_stories(self.db)
+
+    @rollbar_handler
+    def generate_presigned_url(self, object_name: str, expiration: timedelta = timedelta(hours=1)) -> str:
+        try:
+            url = self.minio_instance.presigned_get_object(self.minio_bucket_name, object_name, expires=expiration)
+            return url
+        except Exception as e:
+            raise ValueError(f"Failed to generate presigned URL for {object_name}: {e}")
 
     @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):

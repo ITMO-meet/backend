@@ -138,14 +138,14 @@ async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
         raise HTTPException(status_code=404, detail="Some preferences do not exist")
 
     # Manually assign the 'icon' field since it's not present in the tags collection
-    selected_preferences = [
+    relationship_preferences = [
         {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"}
         for pref in existing_preferences
     ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"selected_preferences": selected_preferences}}
+        {"$set": {"relationship_preferences": relationship_preferences}}
     )
 
     if update_result.modified_count == 0:

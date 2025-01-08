@@ -20,6 +20,23 @@ async def get_profile(isu: int):
     
     user["_id"] = str(user["_id"])
 
+    def clean_object_key(object_key: str) -> str:
+        bucket_prefix = f"{db_instance.minio_bucket_name}/"
+        if object_key.startswith(bucket_prefix):
+            return object_key[len(bucket_prefix):]
+        return object_key
+
+    if user.get("logo"):
+        cleaned_logo_key = clean_object_key(user["logo"])
+        user["logo"] = db_instance.generate_presigned_url(cleaned_logo_key)
+    else:
+        user["logo"] = None
+
+    if user.get("photos"):
+        user["photos"] = [db_instance.generate_presigned_url(clean_object_key(photo)) for photo in user["photos"]]
+    else:
+        user["photos"] = []
+
     return {"profile": user}
 
 
@@ -117,7 +134,10 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     if len(special_tags) != len(tag_ids):
         raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
 
-    relationship_preferences = [{"text": str(tag["_id"]), "icon": "relationship_preferences"} for tag in special_tags]
+    relationship_preferences = [
+        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"}
+        for pref in special_tags
+    ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
