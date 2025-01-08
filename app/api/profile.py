@@ -134,7 +134,10 @@ async def update_relationship_preferences(payload: TagSelectionModel):
     if len(special_tags) != len(tag_ids):
         raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
 
-    relationship_preferences = [{"text": str(tag["_id"]), "icon": "relationship_preferences"} for tag in special_tags]
+    relationship_preferences = [
+        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"}
+        for pref in special_tags
+    ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
