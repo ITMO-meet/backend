@@ -436,6 +436,39 @@ async def test_update_logo_user_not_found(app):
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or logo not updated"}
 
+@pytest.mark.asyncio
+async def test_get_profile_success(app):
+    isu = 123456
+    mock_user_id = ObjectId()
+    user_data = {
+        "_id": mock_user_id,
+        "isu": isu,
+        "logo": "mybucket/some/logo.png",
+        "photos": ["mybucket/photo1.png", "mybucket/photo2.png"],
+    }
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection, \
+         patch.object(db_instance, "generate_presigned_url") as mock_presigned_url:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.find_one.return_value = user_data
+        mock_get_collection.return_value = mock_user_collection
+
+        mock_presigned_url.side_effect = lambda key: f"presigned/{key}"
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.get(f"/get_profile/{isu}")
+
+        assert response.status_code == 200
+        response_json = response.json()
+        assert "profile" in response_json
+        assert response_json["profile"]["_id"] == str(mock_user_id)
+        assert response_json["profile"]["logo"] == "presigned/some/logo.png"
+        assert response_json["profile"]["photos"] == [
+            "presigned/photo1.png",
+            "presigned/photo2.png"
+        ]
+        mock_user_collection.find_one.assert_called_once_with({"isu": isu})
+
 
 @pytest.mark.asyncio
 async def test_get_profile_user_not_found(app):
