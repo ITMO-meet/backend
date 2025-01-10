@@ -113,6 +113,29 @@ async def update_height(isu: int, height: float):
 
     return {"message": "height updated successfully"}
 
+@router.put("/update_alcohol/{isu}")
+@rollbar_handler
+async def update_height(isu: int, alcohol: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.8.text": f"{alcohol}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or alcohol not updated")
+
+    return {"message": "alcohol updated successfully"}
+
+@router.put("/update_smoking/{isu}")
+@rollbar_handler
+async def update_height(isu: int, smoking: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.9.text": f"{smoking}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or smoking not updated")
+
+    return {"message": "Smoking updated successfully"}
+
+
 
 @router.put("/update_weight/{isu}")
 @rollbar_handler
