@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from app.utils.db import db_instance
 from app.models.tag import TagSelectionModel
-from app.models.user import GenderPreferencesSelectionModel, UsernameSelectionModel
+from app.models.user import GenderPreferencesSelectionModel, LanguageSelectionModel
 from app.setup_rollbar import rollbar_handler
 from bson import ObjectId
 from uuid import uuid4
@@ -52,17 +52,55 @@ async def update_bio(isu: int, bio: str):
     return {"message": "bio updated successfully"}
 
 
-@router.put("/update_username")
+@router.put("/update_username/{isu}")
 @rollbar_handler
-async def update_username(payload: UsernameSelectionModel):
+async def update_username(isu: int, username: str):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one({"isu": payload.isu}, {"$set": {"username": payload.username}})
-
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"username": username}})
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or username not updated")
 
     return {"message": "username updated successfully"}
 
+
+@router.put("/update_worldview/{isu}")
+@rollbar_handler
+async def update_worldview(isu: int, worldview: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.5.text": f"{worldview}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or worldview not updated")
+
+    return {"message": "worldview updated successfully"}
+
+@router.put("/update_children/{isu}")
+@rollbar_handler
+async def update_children(isu: int, children: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.6.text": f"{children}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or children not updated")
+
+    return {"message": "children updated successfully"}
+
+@router.put("/update_languages")
+@rollbar_handler
+async def update_languages(payload: LanguageSelectionModel):
+    user_collection = db_instance.get_collection("users")
+
+    languages_feature = [{"text": language, 'icon': 'languages'} for language in payload.languages]
+
+    update_result = await user_collection.update_one(
+        {"isu": payload.isu},
+        {"$set": {"mainFeatures.7": languages_feature}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or languages not updated")
+
+    return {"message": "languages updated successfully"}
 
 @router.put("/update_height/{isu}")
 @rollbar_handler
@@ -74,6 +112,29 @@ async def update_height(isu: int, height: float):
         raise HTTPException(status_code=404, detail="User not found or height not updated")
 
     return {"message": "height updated successfully"}
+
+@router.put("/update_alcohol/{isu}")
+@rollbar_handler
+async def update_alcohol(isu: int, alcohol: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.8.text": f"{alcohol}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or alcohol not updated")
+
+    return {"message": "alcohol updated successfully"}
+
+@router.put("/update_smoking/{isu}")
+@rollbar_handler
+async def update_smoking(isu: int, smoking: str):
+    user_collection = db_instance.get_collection("users")
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.9.text": f"{smoking}"}})
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or smoking not updated")
+
+    return {"message": "Smoking updated successfully"}
+
 
 
 @router.put("/update_weight/{isu}")
@@ -90,9 +151,9 @@ async def update_weight(isu: int, weight: float):
 
 @router.put("/update_zodiac/{isu}")
 @rollbar_handler
-async def update_zodiac_sign(isu: int, zodiac_sign: str):
+async def update_zodiac_sign(isu: int, zodiac: str):
     user_collection = db_instance.get_collection("users")
-    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.1.text": zodiac_sign}})
+    update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.1.text": zodiac}})
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or zodiac sign not updated")
