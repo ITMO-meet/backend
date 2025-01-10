@@ -57,7 +57,8 @@ async def test_update_bio_user_not_found(app):
 
 @pytest.mark.asyncio
 async def test_update_username_success(app):
-    payload = {"isu": 123456, "username": "new_username"}
+    isu = 123456
+    username = "new_username"
     update_result_mock = AsyncMock()
     update_result_mock.modified_count = 1
 
@@ -67,18 +68,19 @@ async def test_update_username_success(app):
         mock_get_collection.return_value = mock_user_collection
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put("/update_username", json=payload)
+            response = await ac.put(f"/update_username/{isu}", params={"username": username})
 
         assert response.status_code == 200
         assert response.json() == {"message": "username updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
-            {"isu": payload["isu"]}, {"$set": {"username": payload["username"]}}
+            {"isu": isu}, {"$set": {"username": username}}
         )
 
 
 @pytest.mark.asyncio
 async def test_update_username_user_not_found(app):
-    payload = {"isu": 123456, "username": "new_username"}
+    isu = 123456
+    username = "new_username"
     update_result_mock = AsyncMock()
     update_result_mock.modified_count = 0
 
@@ -88,10 +90,13 @@ async def test_update_username_user_not_found(app):
         mock_get_collection.return_value = mock_user_collection
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put("/update_username", json=payload)
+            response = await ac.put(f"/update_username/{isu}", params={"username": username})
 
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or username not updated"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"username": username}}
+        )
 
 
 @pytest.mark.asyncio
@@ -187,7 +192,7 @@ async def test_update_zodiac_sign_success(app):
         mock_user_collection.update_one.return_value.modified_count = 1
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac_sign": zodiac_sign})
+            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign})
 
         assert response.status_code == 200
         assert response.json() == {"message": "Zodiac sign updated successfully"}
@@ -204,7 +209,7 @@ async def test_update_zodiac_sign_user_not_found(app):
         mock_user_collection.update_one.return_value.modified_count = 0
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac_sign": zodiac_sign})
+            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign})
 
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or zodiac sign not updated"}

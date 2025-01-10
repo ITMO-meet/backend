@@ -115,7 +115,7 @@ async def update_height(isu: int, height: float):
 
 @router.put("/update_alcohol/{isu}")
 @rollbar_handler
-async def update_height(isu: int, alcohol: str):
+async def update_alcohol(isu: int, alcohol: str):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.8.text": f"{alcohol}"}})
 
@@ -126,7 +126,7 @@ async def update_height(isu: int, alcohol: str):
 
 @router.put("/update_smoking/{isu}")
 @rollbar_handler
-async def update_height(isu: int, smoking: str):
+async def update_smoking(isu: int, smoking: str):
     user_collection = db_instance.get_collection("users")
     update_result = await user_collection.update_one({"isu": isu}, {"$set": {"mainFeatures.9.text": f"{smoking}"}})
 
