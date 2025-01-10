@@ -33,7 +33,9 @@ async def test_update_bio_success(app):
 
         assert response.status_code == 200
         assert response.json() == {"message": "bio updated successfully"}
-        mock_user_collection.update_one.assert_called_once_with({"isu": isu}, {"$set": {"bio": bio}})
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"bio": bio}}
+        )
 
 
 @pytest.mark.asyncio
@@ -68,7 +70,9 @@ async def test_update_username_success(app):
         mock_get_collection.return_value = mock_user_collection
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_username/{isu}", params={"username": username})
+            response = await ac.put(
+                f"/update_username/{isu}", params={"username": username}
+            )
 
         assert response.status_code == 200
         assert response.json() == {"message": "username updated successfully"}
@@ -90,7 +94,9 @@ async def test_update_username_user_not_found(app):
         mock_get_collection.return_value = mock_user_collection
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_username/{isu}", params={"username": username})
+            response = await ac.put(
+                f"/update_username/{isu}", params={"username": username}
+            )
 
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or username not updated"}
@@ -192,7 +198,9 @@ async def test_update_zodiac_sign_success(app):
         mock_user_collection.update_one.return_value.modified_count = 1
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign})
+            response = await ac.put(
+                f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign}
+            )
 
         assert response.status_code == 200
         assert response.json() == {"message": "Zodiac sign updated successfully"}
@@ -209,10 +217,14 @@ async def test_update_zodiac_sign_user_not_found(app):
         mock_user_collection.update_one.return_value.modified_count = 0
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.put(f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign})
+            response = await ac.put(
+                f"/update_zodiac/{isu}", params={"zodiac": zodiac_sign}
+            )
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "User not found or zodiac sign not updated"}
+        assert response.json() == {
+            "detail": "User not found or zodiac sign not updated"
+        }
 
 
 @pytest.mark.asyncio
@@ -266,8 +278,13 @@ async def test_update_tags_user_not_found(app):
 
         mock_db_instance.get_collection.side_effect = get_collection_mock
 
-        existing_tags = [{"_id": ObjectId(tag_id), "name": f"tag_{tag_id}", "is_special": 0} for tag_id in tags]
-        mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=existing_tags)
+        existing_tags = [
+            {"_id": ObjectId(tag_id), "name": f"tag_{tag_id}", "is_special": 0}
+            for tag_id in tags
+        ]
+        mock_tags_collection.find.return_value.to_list = AsyncMock(
+            return_value=existing_tags
+        )
 
         mock_user_collection.update_one.return_value.modified_count = 0
 
@@ -301,8 +318,10 @@ async def test_update_relationship_preferences_success(app):
         special_tags = [
             {"_id": ObjectId(tag_id), "name": f"special_tag_{tag_id}", "is_special": 1}
             for tag_id in tags
-        ]        
-        mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=special_tags)
+        ]
+        mock_tags_collection.find.return_value.to_list = AsyncMock(
+            return_value=special_tags
+        )
 
         mock_user_collection.update_one.return_value.modified_count = 1
 
@@ -310,7 +329,9 @@ async def test_update_relationship_preferences_success(app):
             response = await ac.put("/update_relationship_preferences", json=payload)
 
         assert response.status_code == 200
-        assert response.json() == {"message": "relationship preferences updated successfully"}
+        assert response.json() == {
+            "message": "relationship preferences updated successfully"
+        }
 
 
 @pytest.mark.asyncio
@@ -334,13 +355,17 @@ async def test_update_relationship_preferences_some_tags_not_special(app):
         mock_db_instance.get_collection.side_effect = get_collection_mock
 
         special_tags = [{"_id": ObjectId(tags[0]), "is_special": 1}]
-        mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=special_tags)
+        mock_tags_collection.find.return_value.to_list = AsyncMock(
+            return_value=special_tags
+        )
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.put("/update_relationship_preferences", json=payload)
 
         assert response.status_code == 400
-        assert response.json() == {"detail": "Some tags do not exist or are not special tags"}
+        assert response.json() == {
+            "detail": "Some tags do not exist or are not special tags"
+        }
 
 
 @pytest.mark.asyncio
@@ -367,7 +392,9 @@ async def test_update_relationship_preferences_user_not_found(app):
             {"_id": ObjectId(tag_id), "name": f"special_tag_{tag_id}", "is_special": 1}
             for tag_id in tags
         ]
-        mock_tags_collection.find.return_value.to_list = AsyncMock(return_value=special_tags)
+        mock_tags_collection.find.return_value.to_list = AsyncMock(
+            return_value=special_tags
+        )
 
         mock_user_collection.update_one.return_value.modified_count = 0
 
@@ -375,7 +402,9 @@ async def test_update_relationship_preferences_user_not_found(app):
             response = await ac.put("/update_relationship_preferences", json=payload)
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "User not found or preferences not updated"}
+        assert response.json() == {
+            "detail": "User not found or preferences not updated"
+        }
 
 
 @pytest.mark.asyncio
@@ -436,6 +465,7 @@ async def test_update_logo_user_not_found(app):
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found or logo not updated"}
 
+
 @pytest.mark.asyncio
 async def test_get_profile_success(app):
     isu = 123456
@@ -443,12 +473,17 @@ async def test_get_profile_success(app):
     user_data = {
         "_id": mock_user_id,
         "isu": isu,
-        "logo": "mybucket/some/logo.png",
-        "photos": ["mybucket/photo1.png", "mybucket/photo2.png"],
+        "logo": "bucker/some/logo.png",
+        "photos": ["bucker/photo1.png", "bucker/photo2.png"],
     }
 
-    with patch.object(db_instance, "get_collection") as mock_get_collection, \
-         patch.object(db_instance, "generate_presigned_url") as mock_presigned_url:
+    with patch.object(
+        db_instance, "get_collection"
+    ) as mock_get_collection, patch.object(
+        db_instance, "generate_presigned_url"
+    ) as mock_presigned_url, patch.object(
+        db_instance, "minio_bucket_name", new="bucker"
+    ):
         mock_user_collection = AsyncMock()
         mock_user_collection.find_one.return_value = user_data
         mock_get_collection.return_value = mock_user_collection
@@ -465,7 +500,7 @@ async def test_get_profile_success(app):
         assert response_json["profile"]["logo"] == "presigned/some/logo.png"
         assert response_json["profile"]["photos"] == [
             "presigned/photo1.png",
-            "presigned/photo2.png"
+            "presigned/photo2.png",
         ]
         mock_user_collection.find_one.assert_called_once_with({"isu": isu})
 
@@ -505,7 +540,16 @@ async def test_update_gender_preference_success(app):
         assert response.json() == {"message": "gender preference updated successfully"}
         mock_user_collection.update_one.assert_called_once_with(
             {"isu": payload["isu"]},
-            {"$set": {"gender_preferences": [{"text": payload["gender_preference"], "icon": "gender_preferences"}]}},
+            {
+                "$set": {
+                    "gender_preferences": [
+                        {
+                            "text": payload["gender_preference"],
+                            "icon": "gender_preferences",
+                        }
+                    ]
+                }
+            },
         )
 
 
@@ -524,10 +568,21 @@ async def test_update_gender_preference_user_not_found(app):
             response = await ac.put("/update_gender_preference", json=payload)
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "User not found or gender preference not updated"}
+        assert response.json() == {
+            "detail": "User not found or gender preference not updated"
+        }
         mock_user_collection.update_one.assert_called_once_with(
             {"isu": payload["isu"]},
-            {"$set": {"gender_preferences": [{"text": payload["gender_preference"], "icon": "gender_preferences"}]}},
+            {
+                "$set": {
+                    "gender_preferences": [
+                        {
+                            "text": payload["gender_preference"],
+                            "icon": "gender_preferences",
+                        }
+                    ]
+                }
+            },
         )
 
 
@@ -566,7 +621,9 @@ async def test_update_carousel_photo_success(app):
             response = await ac.put(
                 f"/update_carousel_photo/{isu}",
                 params={"old_photo_url": old_photo_url},
-                files={"new_file": (new_file.filename, new_file, new_file.content_type)},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
             )
 
         assert response.status_code == 200
@@ -600,7 +657,9 @@ async def test_update_carousel_photo_user_not_found(app):
             response = await ac.put(
                 f"/update_carousel_photo/{isu}",
                 params={"old_photo_url": old_photo_url},
-                files={"new_file": (new_file.filename, new_file, new_file.content_type)},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
             )
 
         assert response.status_code == 404
@@ -628,7 +687,9 @@ async def test_update_carousel_photo_old_photo_not_found(app):
             response = await ac.put(
                 f"/update_carousel_photo/{isu}",
                 params={"old_photo_url": old_photo_url},
-                files={"new_file": (new_file.filename, new_file, new_file.content_type)},
+                files={
+                    "new_file": (new_file.filename, new_file, new_file.content_type)
+                },
             )
 
         assert response.status_code == 404
@@ -653,7 +714,9 @@ async def test_delete_carousel_photo_success(app):
         mock_user_collection.update_one.return_value.modified_count = 1
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.delete(f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url})
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
 
         assert response.status_code == 200
         assert response.json() == {"message": "carousel photo deleted successfully"}
@@ -675,7 +738,9 @@ async def test_delete_carousel_photo_user_not_found(app):
         mock_user_collection.find_one.return_value = None
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.delete(f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url})
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
 
         assert response.status_code == 404
         assert response.json() == {"detail": "User not found"}
@@ -695,7 +760,246 @@ async def test_delete_carousel_photo_photo_not_found(app):
         mock_user_collection.find_one.return_value = user_data
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.delete(f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url})
+            response = await ac.delete(
+                f"/delete_carousel_photo/{isu}", params={"photo_url": photo_url}
+            )
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Photo not found in carousel"}
+
+
+@pytest.mark.asyncio
+async def test_update_worldview_success(app):
+    isu = 123456
+    worldview = "worldview"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_worldview/{isu}", params={"worldview": worldview}
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "worldview updated successfully"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.5.text": worldview}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_worldview_user_not_found(app):
+    isu = 123456
+    worldview = "worldview"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_worldview/{isu}", params={"worldview": worldview}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found or worldview not updated"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.5.text": worldview}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_children_success(app):
+    isu = 123456
+    children = "children"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_children/{isu}", params={"children": children}
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "children updated successfully"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.6.text": children}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_children_user_not_found(app):
+    isu = 123456
+    children = "children"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_children/{isu}", params={"children": children}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found or children not updated"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.6.text": children}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_languages_success(app):
+    payload = {"isu": 123456, "languages": ["English", "Russian"]}
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put("/update_languages", json=payload)
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "languages updated successfully"}
+        mock_user_collection.update_one.assert_called_once()
+        mock_user_collection.update_one.assert_called_with(
+            {"isu": payload["isu"]},
+            {
+                "$set": {
+                    "mainFeatures.7": [
+                        {"text": "English", "icon": "languages"},
+                        {"text": "Russian", "icon": "languages"},
+                    ]
+                }
+            },
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_languages_user_not_found(app):
+    payload = {"isu": 123456, "languages": ["English", "Russian"]}
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put("/update_languages", json=payload)
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found or languages not updated"}
+        mock_user_collection.update_one.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_alcohol_success(app):
+    isu = 123456
+    alcohol = "Negative"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_alcohol/{isu}", params={"alcohol": alcohol}
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "alcohol updated successfully"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.8.text": alcohol}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_alcohol_user_not_found(app):
+    isu = 123456
+    alcohol = "Negative"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_alcohol/{isu}", params={"alcohol": alcohol}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found or alcohol not updated"}
+        mock_user_collection.update_one.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_smoking_success(app):
+    isu = 123456
+    smoking = "Negative"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 1
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_smoking/{isu}", params={"smoking": smoking}
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "Smoking updated successfully"}
+        mock_user_collection.update_one.assert_called_once_with(
+            {"isu": isu}, {"$set": {"mainFeatures.9.text": smoking}}
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_smoking_user_not_found(app):
+    isu = 123456
+    smoking = "Negative"
+    update_result_mock = AsyncMock()
+    update_result_mock.modified_count = 0
+
+    with patch.object(db_instance, "get_collection") as mock_get_collection:
+        mock_user_collection = AsyncMock()
+        mock_user_collection.update_one.return_value = update_result_mock
+        mock_get_collection.return_value = mock_user_collection
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.put(
+                f"/update_smoking/{isu}", params={"smoking": smoking}
+            )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found or smoking not updated"}
+        mock_user_collection.update_one.assert_called_once()
