@@ -13,18 +13,24 @@ async def get_random_person(user_id: int):
     if not person:
         raise HTTPException(status_code=404, detail="No more persons available")
 
+
+    def clean_object_key(object_key: str) -> str:
+        bucket_prefix = f"{db_instance.minio_bucket_name}/"
+        if object_key.startswith(bucket_prefix):
+            return object_key[len(bucket_prefix):]
+        return object_key
+
+    if person.get("logo"):
+        cleaned_logo_key = clean_object_key(person["logo"])
+        person["logo"] = db_instance.generate_presigned_url(cleaned_logo_key)
+    else:
+        person["logo"] = None
+    
     response_data = {
         "isu": person["isu"],
         "username": person.get("username", ""),
         "bio": person.get("bio", ""),
         "logo": person.get("logo", ""),
-        "photos": person.get("photos", []),
-        "mainFeatures": person.get("mainFeatures", []),
-        "interests": person.get("interests", []),
-        "itmo": person.get("itmo", []),
-        "gender_preferences": person.get("gender_preferences", []),
-        "relationship_preferences": person.get("relationship_preferences", []),
-        "isStudent": person.get("isStudent", True),
     }
 
     return response_data
