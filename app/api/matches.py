@@ -18,7 +18,7 @@ async def get_random_person(user_id: int):
     def clean_object_key(object_key: str) -> str:
         bucket_prefix = f"{db_instance.minio_bucket_name}/"
         if object_key.startswith(bucket_prefix):
-            return object_key[len(bucket_prefix):]
+            return object_key[len(bucket_prefix) :]
         return object_key
 
     if person.get("logo"):
@@ -29,7 +29,8 @@ async def get_random_person(user_id: int):
 
     if person.get("photos"):
         person["photos"] = [
-            db_instance.generate_presigned_url(clean_object_key(photo)) for photo in person["photos"]
+            db_instance.generate_presigned_url(clean_object_key(photo))
+            for photo in person["photos"]
         ]
     else:
         person["photos"] = []
@@ -84,7 +85,11 @@ async def get_matches(isu: int):
 
     user_ids = [like["user_id"] for like in likes]
 
-    users = await db_instance.db["users"].find({"isu": {"$in": user_ids}}).to_list(length=None)
+    users = (
+        await db_instance.db["users"]
+        .find({"isu": {"$in": user_ids}})
+        .to_list(length=None)
+    )
 
     result = []
     for user in users:
