@@ -2,6 +2,9 @@ from fastapi import APIRouter, HTTPException
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
 from app.models.match import UserAction
+from datetime import datetime
+from datetime import timezone
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -66,6 +69,44 @@ async def like_person(payload: UserAction):
             "chat_id": result["chat_id"],
         }
     return {"message": "person liked successfully", "matched": False}
+
+
+@router.post("/superlike_person")
+@rollbar_handler
+async def superlike_person(payload: UserAction):
+    result = await db_instance.like_user(payload.user_id, payload.target_id)
+
+    reverse_like = await db_instance.db["likes"].find_one(
+        {"user_id": payload.target_id, "target_id": payload.user_id}
+    )
+
+    if not reverse_like:
+        await db_instance.db["likes"].insert_one(
+            {
+                "user_id": payload.target_id,
+                "target_id": payload.user_id,
+                "created_at": datetime.now(timezone.utc),
+            }
+        )
+
+    if result.get("matched"):
+        return {
+            "message": "You have a match!",
+            "matched": True,
+            "chat_id": result["chat_id"],
+        }
+    else:
+
+        chat_id = str(ObjectId())
+        await db_instance.create_chat(
+            chat_id=chat_id, isu_1=payload.user_id, isu_2=payload.target_id
+        )
+
+        return {
+            "message": "You have a match!",
+            "matched": True,
+            "chat_id": chat_id,
+        }
 
 
 @router.post("/dislike_person")
