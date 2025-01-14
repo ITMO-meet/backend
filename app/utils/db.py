@@ -65,10 +65,10 @@ class Database:
 
         minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
         minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
-        
+
         if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
             raise ValueError("MINIO calendar not found in env")
-        
+
         self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
 
         if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
@@ -76,7 +76,7 @@ class Database:
 
         if self.is_test_env:
             import asyncio
-            asyncio.run(self.setup_test_db())
+            asyncio.create_task(self.setup_test_db())
 
     @property
     def is_test_env(self) -> bool:
@@ -128,7 +128,7 @@ class Database:
             content_type=content_type,
         )
         return f"{self.minio_bucket_name}/{filename}"
-    
+
     @rollbar_handler
     def uplod_json_to_minio(self, data: dict, filename):
         json_data = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -141,9 +141,9 @@ class Database:
             len(json_data),
             content_type="application/json",
         )
-        
+
         return f"{self.minio_calendar_bucket_name}/{filename}"
-    
+
     @rollbar_handler
     def get_json_from_minio(self, filename) -> dict:
         try:
@@ -152,14 +152,14 @@ class Database:
                 filename,
             )
             json_data = json.load(response)
-            
+
             response.close()
             response.release_conn()
 
             return json_data
         except Exception as e:
             raise ValueError(f"Failed to get json calendar from minio: {e}")
-        
+
     @rollbar_handler
     def delete_json_from_minio(self, filename):
         try:
