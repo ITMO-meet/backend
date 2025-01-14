@@ -115,6 +115,21 @@ async def dislike_person(payload: UserAction):
     await db_instance.dislike_user(payload.user_id, payload.target_id)
     return {"message": "person disliked successfully"}
 
+@router.post("/block_person")
+@rollbar_handler
+async def block_person(payload: UserAction):
+    result = await db_instance.db["chats"].delete_one({
+        "$or":[
+            {"isu_1": payload.user_id, "isu_2": payload.target_id},
+            {"isu_1": payload.target_id, "isu_2": payload.user_id},
+        ]
+    })
+
+    if result.deleted_count > 0:
+        return {"message": "user blocked, chat deleted"}
+    else:
+        raise HTTPException(status_code=404, details="chat not found or user already blocked")
+
 
 @router.get("/liked_me")
 @rollbar_handler
