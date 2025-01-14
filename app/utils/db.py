@@ -65,10 +65,10 @@ class Database:
 
         minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
         minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
-        
+
         if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
             raise ValueError("MINIO calendar not found in env")
-        
+
         self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
 
         if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
@@ -76,7 +76,7 @@ class Database:
 
         if self.is_test_env:
             import asyncio
-            asyncio.run(self.setup_test_db())
+            asyncio.create_task(self.setup_test_db())
 
     @property
     def is_test_env(self) -> bool:
