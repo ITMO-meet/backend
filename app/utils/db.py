@@ -288,7 +288,7 @@ class Database:
     @rollbar_handler
     async def get_chats_by_user(self, isu: int):
         result = await self.db["chats"].find({"$or": [{"isu_1": isu}, {"isu_2": isu}]}).to_list(length=None)
-        return [{"chat_id": chat["chat_id"]} for chat in result]
+        return [{"chat_id": chat["chat_id"], "isu_1": chat["isu_1"], "isu_2": chat["isu_2"]} for chat in result]
 
     @rollbar_handler
     async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
