@@ -37,8 +37,7 @@ class Database:
 
         self.client = AsyncIOMotorClient(mongo_uri)
 
-        # self.environment = os.getenv("ENVIRONMENT", "prod")
-        self.environment = "prod"
+        self.environment = os.getenv("ENVIRONMENT", "prod")
 
         if self.is_test_env:
             self.db_name = "meet-test"
