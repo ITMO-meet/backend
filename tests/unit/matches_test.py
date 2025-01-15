@@ -1,9 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from app.utils.db import db_instance
+
 from app.api.matches import router
+from app.utils.db import db_instance
 
 
 @pytest.fixture
@@ -31,9 +33,7 @@ async def test_get_random_person_success(app):
         "isStudent": True,
     }
 
-    with patch.object(
-        db_instance, "get_random_person", AsyncMock(return_value=mock_person)
-    ):
+    with patch.object(db_instance, "get_random_person", AsyncMock(return_value=mock_person)):
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.get("/random_person", params={"user_id": user_id})
 

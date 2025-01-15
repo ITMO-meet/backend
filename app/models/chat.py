@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,4 +12,5 @@ class SendMessage(BaseModel):
     chat_id: str
     sender_id: int
     receiver_id: int
-    text: str
+    media_id: Optional[str] = ""
+    text: Optional[str] = ""

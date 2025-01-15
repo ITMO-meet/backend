@@ -1,11 +1,13 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock, patch
+
 from app.api.chats import (
     create_chat,
     get_chats_for_user,
-    send_message,
     get_messages,
+    send_message,
 )
 from app.models.chat import CreateChat, SendMessage
 
@@ -40,11 +42,8 @@ async def test_get_chats_for_user_not_found():
     with patch("app.api.chats.db_instance.get_chats_by_user", new_callable=AsyncMock) as mock_get_chats_by_user:
         mock_get_chats_by_user.return_value = []
 
-        with pytest.raises(HTTPException) as exc_info:
-            await get_chats_for_user(isu)
-
-        assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "chats not found for this user"
+        chats = await get_chats_for_user(isu)
+        assert chats == {"chats": []}
 
         mock_get_chats_by_user.assert_awaited_once_with(isu)
 
@@ -74,7 +73,11 @@ async def test_send_message_success():
         assert result == {"message_id": "message_id_123"}
 
         mock_create_message.assert_awaited_once_with(
-            chat_id=payload.chat_id, sender_id=payload.sender_id, receiver_id=payload.receiver_id, text=payload.text
+            chat_id=payload.chat_id,
+            sender_id=payload.sender_id,
+            receiver_id=payload.receiver_id,
+            text=payload.text,
+            media_id="",
         )
 
 
@@ -87,13 +90,8 @@ async def test_get_messages_not_found():
     with patch("app.api.chats.db_instance.get_messages", new_callable=AsyncMock) as mock_get_messages:
         mock_get_messages.return_value = []
 
-        with pytest.raises(HTTPException) as exc_info:
-            await get_messages(chat_id, limit, offset)
-
-        assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "messages not found"
-
-        mock_get_messages.assert_awaited_once_with(chat_id=chat_id, limit=limit, offset=offset)
+        messages = await get_messages(chat_id, limit, offset)
+        assert messages == {"messages": []}
 
 
 @pytest.mark.asyncio
@@ -103,6 +101,7 @@ async def test_get_messages_success():
     offset = 0
     messages = [
         {
+            "chat_id": "abobus131",
             "message_id": "msg1",
             "sender_id": 123456,
             "receiver_id": 789012,

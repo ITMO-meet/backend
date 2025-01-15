@@ -1,5 +1,6 @@
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import List, Optional, Dict
 
 
 class UserModel(BaseModel):
@@ -33,6 +34,7 @@ class GenderPreferencesSelectionModel(BaseModel):
 class RelationshipsPreferencesSelectionModel(BaseModel):
     isu: int
     relationship_preference: List[str]
+
 
 class LanguageSelectionModel(BaseModel):
     isu: int

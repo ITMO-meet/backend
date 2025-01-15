@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from fastapi import HTTPException
-from app.api.quizes import get_test_info, start_test, get_question
+
+from app.api.quizes import get_question, get_test_info, start_test
 from app.models.quiz import StartTestRequest
 
 

@@ -1,5 +1,6 @@
-from app.models.pyObject import PyObjectId
 from bson import ObjectId
+
+from app.models.pyObject import PyObjectId
 
 
 def test_valid_object_id():

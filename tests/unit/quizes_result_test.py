@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from fastapi import HTTPException
+
 from app.api.quizes_results import answer_question, complete_test, get_current_answers
 from app.models.quiz import AnswerRequest
 

@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, Query
+from datetime import timedelta
 from uuid import uuid4
 
-from app.utils.db import db_instance
-from app.setup_rollbar import rollbar_handler
+from bson import ObjectId
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+
 from app.models.chat import CreateChat, SendMessage
+from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
+from app.utils.serializer import serialize
 
 router = APIRouter()
 
@@ -24,9 +28,12 @@ async def create_chat(payload: CreateChat):
 async def get_chats_for_user(isu: int):
     chats = await db_instance.get_chats_by_user(isu)
     if not chats:
-        raise HTTPException(status_code=404, detail="chats not found for this user")
+        return {"chats": []}
 
-    return {"chats": chats}
+    # Serialize all ObjectId fields to strings
+    serialized_chats = [serialize(chat) for chat in chats]
+
+    return {"chats": serialized_chats}
 
 
 @router.post("/send_message")
@@ -37,6 +44,7 @@ async def send_message(payload: SendMessage):
         sender_id=payload.sender_id,
         receiver_id=payload.receiver_id,
         text=payload.text,
+        media_id=payload.media_id,
     )
     return {"message_id": message_id}
 
@@ -46,5 +54,61 @@ async def send_message(payload: SendMessage):
 async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)):
     messages = await db_instance.get_messages(chat_id=chat_id, limit=limit, offset=offset)
     if not messages:
-        raise HTTPException(status_code=404, detail="messages not found")
-    return {"messages": messages}
+        return {"messages": []}
+
+    formatted_messages = []
+    for message in messages:
+        formatted_message = {
+            "chat_id": message["chat_id"],
+            "message_id": message["message_id"],
+            "sender_id": message["sender_id"],
+            "receiver_id": message["receiver_id"],
+            "timestamp": message["timestamp"],
+        }
+        if "media_id" in message and message["media_id"]:
+            formatted_message["media_id"] = message["media_id"]
+        else:
+            formatted_message["text"] = message.get("text", "")
+
+        formatted_messages.append(formatted_message)
+
+    return {"messages": formatted_messages}
+
+
+@router.post("/upload_media")
+@rollbar_handler
+async def upload_media(isu: int = Form(...), chat_id: str = Form(...), file: UploadFile = File(...)):
+    file_extension = file.filename.split(".")[-1]
+    filename = f"media/{chat_id}/{isu}_{uuid4()}.{file_extension}"
+
+    file_url = db_instance.upload_file_to_minio(
+        file.file,
+        filename,
+        content_type=file.content_type or "application/octet-stream",
+    )
+
+    media_id = await db_instance.save_media(isu, chat_id, file_url)
+
+    return {"media_id": media_id}
+
+
+@router.get("/get_media")
+@rollbar_handler
+async def get_media(media_id: str):
+    media_collection = db_instance.get_collection("media")
+    media = await media_collection.find_one({"_id": ObjectId(media_id)})
+
+    path = media["path"]
+    bucket_prefix = f"{db_instance.minio_bucket_name}/"
+    if path.startswith(bucket_prefix):
+        path = path[len(bucket_prefix) :]
+
+    presigned_url = db_instance.generate_presigned_url(object_name=path, expiration=timedelta(hours=3))
+
+    return {
+        "media_id": str(media["_id"]),
+        "isu": media["isu"],
+        "chat_id": media["chat_id"],
+        "url": presigned_url,
+        "created_at": media["created_at"],
+    }

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
-from bson import ObjectId
 from typing import List, Optional
+
+from bson import ObjectId
+from pydantic import BaseModel, Field
+
 from .pyObject import PyObjectId
 
 

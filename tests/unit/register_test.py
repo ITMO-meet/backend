@@ -1,10 +1,12 @@
+import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
+from bson import ObjectId
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.main import app
 from app.utils.db import db_instance
-import os
-from bson import ObjectId
 
 os.environ["TESTING"] = "True"
 
@@ -22,8 +24,16 @@ async def test_select_tags_success():
         mock_cursor = MagicMock()
         mock_cursor.to_list = AsyncMock(
             return_value=[
-                {"_id": ObjectId("5f43a1c667a9032a6e63d9f1"), "name": "Tag1", "is_special": 0},
-                {"_id": ObjectId("5f43a1c667a9032a6e63d9f2"), "name": "Tag2", "is_special": 0},
+                {
+                    "_id": ObjectId("5f43a1c667a9032a6e63d9f1"),
+                    "name": "Tag1",
+                    "is_special": 0,
+                },
+                {
+                    "_id": ObjectId("5f43a1c667a9032a6e63d9f2"),
+                    "name": "Tag2",
+                    "is_special": 0,
+                },
             ]
         )
         mock_tags_collection.find.return_value = mock_cursor
@@ -33,7 +43,10 @@ async def test_select_tags_success():
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.post(
                 "/auth/register/select_tags",
-                json={"isu": 12345, "tags": ["5f43a1c667a9032a6e63d9f1", "5f43a1c667a9032a6e63d9f2"]},
+                json={
+                    "isu": 12345,
+                    "tags": ["5f43a1c667a9032a6e63d9f1", "5f43a1c667a9032a6e63d9f2"],
+                },
             )
     assert response.status_code == 200
     assert response.json() == {"message": "Tags selected successfully, proceed to the next step"}

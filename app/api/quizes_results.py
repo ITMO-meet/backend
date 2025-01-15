@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from app.utils.db import db_instance
+
 from app.models.quiz import AnswerRequest
 from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 
 router = APIRouter()
 
