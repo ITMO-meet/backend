@@ -6,6 +6,7 @@ from datetime import timedelta
 from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
 from app.models.chat import CreateChat, SendMessage
+from app.utils.serializer import serialize
 
 router = APIRouter()
 
@@ -14,14 +15,10 @@ router = APIRouter()
 @rollbar_handler
 async def create_chat(payload: CreateChat):
     if payload.isu_1 == payload.isu_2:
-        raise HTTPException(
-            status_code=400, detail="chat cannot be created for the same user"
-        )
+        raise HTTPException(status_code=400, detail="chat cannot be created for the same user")
 
     chat_id = str(uuid4())
-    await db_instance.create_chat(
-        chat_id=chat_id, isu_1=payload.isu_1, isu_2=payload.isu_2
-    )
+    await db_instance.create_chat(chat_id=chat_id, isu_1=payload.isu_1, isu_2=payload.isu_2)
     return {"chat_id": chat_id}
 
 
@@ -32,7 +29,10 @@ async def get_chats_for_user(isu: int):
     if not chats:
         return {"chats": []}
 
-    return {"chats": chats}
+    # Serialize all ObjectId fields to strings
+    serialized_chats = [serialize(chat) for chat in chats]
+
+    return {"chats": serialized_chats}
 
 
 @router.post("/send_message")
@@ -49,14 +49,8 @@ async def send_message(payload: SendMessage):
 
 @router.get("/get_messages/{chat_id}")
 @rollbar_handler
-async def get_messages(
-    chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)
-):
-    messages = (
-        await db_instance.get_messages(
-            chat_id=chat_id, limit=limit, offset=offset
-        )
-    )
+async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)):
+    messages = await db_instance.get_messages(chat_id=chat_id, limit=limit, offset=offset)
     if not messages:
         return {"messages": []}
 
@@ -107,9 +101,7 @@ async def get_media(media_id: str):
     if path.startswith(bucket_prefix):
         path = path[len(bucket_prefix) :]
 
-    presigned_url = db_instance.generate_presigned_url(
-        object_name=path, expiration=timedelta(hours=3)
-    )
+    presigned_url = db_instance.generate_presigned_url(object_name=path, expiration=timedelta(hours=3))
 
     return {
         "media_id": str(media["_id"]),
