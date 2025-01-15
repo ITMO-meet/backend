@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile, Depends
+from fastapi import APIRouter, Form, HTTPException, File, UploadFile, Depends
 from uuid import uuid4
 from datetime import datetime, timedelta
 from app.utils.db import db_instance
@@ -11,7 +11,10 @@ router = APIRouter()
 
 @router.post("/create_story")
 @rollbar_handler
-async def create_story(isu: int, file: UploadFile = File(...)):
+async def create_story(
+    isu: int = Form(...),
+    file: UploadFile = File(...)
+):
     stories_collection = db_instance.get_collection("stories")
 
     file_extension = file.filename.split(".")[-1]
@@ -37,16 +40,16 @@ async def create_story(isu: int, file: UploadFile = File(...)):
     return {"expDate": expiration_date, "id": str(insert_result.inserted_id)}
 
 
-@router.get("/get_story")
+@router.get("/get_story/{story_id}")
 @rollbar_handler
-async def get_story(payload: GetStory = Depends()):
+async def get_story(story_id: str):
     stories_collection = db_instance.get_collection("stories")
     has_access = True  # TODO: Implement access control logic
 
     if not has_access:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    story = await stories_collection.find_one({"_id": ObjectId(payload.story_id)})
+    story = await stories_collection.find_one({"_id": ObjectId(story_id)})
 
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
@@ -56,9 +59,7 @@ async def get_story(payload: GetStory = Depends()):
     if path.startswith(bucket_prefix):
         path = path[len(bucket_prefix) :]
 
-    presigned_url = db_instance.generate_presigned_url(
-        object_name=path, expiration=timedelta(hours=3)
-    )
+    presigned_url = db_instance.generate_presigned_url(object_name=path, expiration=timedelta(hours=3))
 
     return {
         "id": str(story["_id"]),
@@ -75,6 +76,6 @@ async def get_user_stories(isu: int):
     cursor = stories_collection.find({"isu": isu})
     stories = await cursor.to_list(length=None)
     if not stories:
-        raise HTTPException(status_code=404, detail="User has no stories")
+        return {"stories": []}
     story_ids = [str(story["_id"]) for story in stories]
     return {"stories": story_ids}

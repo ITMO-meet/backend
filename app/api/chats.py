@@ -43,7 +43,7 @@ async def send_message(payload: SendMessage):
         sender_id=payload.sender_id,
         receiver_id=payload.receiver_id,
         text=payload.text,
-        media_id=payload.media_id
+        media_id=payload.media_id,
     )
     return {"message_id": message_id}
 
@@ -76,11 +76,7 @@ async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = 
 
 @router.post("/upload_media")
 @rollbar_handler
-async def upload_media(
-    isu: int = Form(...),
-    chat_id: str = Form(...),
-    file: UploadFile = File(...)
-):
+async def upload_media(isu: int = Form(...), chat_id: str = Form(...), file: UploadFile = File(...)):
     file_extension = file.filename.split(".")[-1]
     filename = f"media/{chat_id}/{isu}_{uuid4()}.{file_extension}"
 

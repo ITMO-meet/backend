@@ -4,6 +4,7 @@ from app.setup_rollbar import rollbar_handler
 
 router = APIRouter()
 
+
 @router.get("/get_calendar/{isu}")
 @rollbar_handler
 async def update_calendar(isu: int):
