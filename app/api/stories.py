@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile, Depends
 from uuid import uuid4
 from datetime import datetime, timedelta
 from app.utils.db import db_instance
@@ -39,7 +39,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
 
 @router.get("/get_story")
 @rollbar_handler
-async def get_story(payload: GetStory):
+async def get_story(payload: GetStory = Depends()):
     stories_collection = db_instance.get_collection("stories")
     has_access = True  # TODO: Implement access control logic
 
@@ -48,7 +48,6 @@ async def get_story(payload: GetStory):
 
     story = await stories_collection.find_one({"_id": ObjectId(payload.story_id)})
 
-    print(story)
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
 
