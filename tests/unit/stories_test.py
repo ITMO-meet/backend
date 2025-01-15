@@ -38,8 +38,8 @@ async def test_create_story_success(app):
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
             files = {"file": ("test.jpg", b"random img data", "image/jpeg")}
-            params = {"isu": isu}
-            response = await ac.post("/create_story", params=params, files=files)
+            data = {"isu": isu}
+            response = await ac.post("/create_story", data=data, files=files)
 
         assert response.status_code == 200
         response_json = response.json()
@@ -68,8 +68,8 @@ async def test_create_story_failure(app):
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
             files = {"file": ("test.jpg", b"random img data", "image/jpeg")}
-            params = {"isu": isu}
-            response = await ac.post("/create_story", params=params, files=files)
+            data = {"isu": isu}
+            response = await ac.post("/create_story", data=data, files=files)
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story cannot be inserted"}

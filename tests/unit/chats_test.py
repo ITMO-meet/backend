@@ -77,6 +77,7 @@ async def test_send_message_success():
             sender_id=payload.sender_id,
             receiver_id=payload.receiver_id,
             text=payload.text,
+            media_id="",
         )
 
 
