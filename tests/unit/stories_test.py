@@ -96,7 +96,7 @@ async def test_get_story_success(app):
         mock_generate_presigned_url.return_value = story_data["url"]
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.get("/get_story", story_id=story_id)
+            response = await ac.get(f"/get_story/{story_id}")
 
         assert response.status_code == 200
         assert response.json() == {
@@ -119,7 +119,7 @@ async def test_get_story_not_found(app):
         mock_stories_collection.find_one.return_value = None
 
         async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.get("/get_story", story_id=story_id)
+            response = await ac.get(f"/get_story/{story_id}")
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Story not found"}
