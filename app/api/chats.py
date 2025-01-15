@@ -56,7 +56,7 @@ async def get_messages(
         chat_id=chat_id, limit=limit, offset=offset
     )
     if not messages:
-        raise HTTPException(status_code=404, detail="messages not found")
+        return {"messages": []}
     return {"messages": messages}
 
 
