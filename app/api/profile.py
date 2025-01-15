@@ -17,13 +17,13 @@ async def get_profile(isu: int):
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     user["_id"] = str(user["_id"])
 
     def clean_object_key(object_key: str) -> str:
         bucket_prefix = f"{db_instance.minio_bucket_name}/"
         if object_key.startswith(bucket_prefix):
-            return object_key[len(bucket_prefix):]
+            return object_key[len(bucket_prefix) :]
         return object_key
 
     if user.get("logo"):
@@ -74,6 +74,7 @@ async def update_worldview(isu: int, worldview: str):
 
     return {"message": "worldview updated successfully"}
 
+
 @router.put("/update_children/{isu}")
 @rollbar_handler
 async def update_children(isu: int, children: str):
@@ -85,22 +86,23 @@ async def update_children(isu: int, children: str):
 
     return {"message": "children updated successfully"}
 
+
 @router.put("/update_languages")
 @rollbar_handler
 async def update_languages(payload: LanguageSelectionModel):
     user_collection = db_instance.get_collection("users")
 
-    languages_feature = [{"text": language, 'icon': 'languages'} for language in payload.languages]
+    languages_feature = [{"text": language, "icon": "languages"} for language in payload.languages]
 
     update_result = await user_collection.update_one(
-        {"isu": payload.isu},
-        {"$set": {"mainFeatures.7": languages_feature}}
+        {"isu": payload.isu}, {"$set": {"mainFeatures.7": languages_feature}}
     )
 
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or languages not updated")
 
     return {"message": "languages updated successfully"}
+
 
 @router.put("/update_height/{isu}")
 @rollbar_handler
@@ -113,6 +115,7 @@ async def update_height(isu: int, height: float):
 
     return {"message": "height updated successfully"}
 
+
 @router.put("/update_alcohol/{isu}")
 @rollbar_handler
 async def update_alcohol(isu: int, alcohol: str):
@@ -124,6 +127,7 @@ async def update_alcohol(isu: int, alcohol: str):
 
     return {"message": "alcohol updated successfully"}
 
+
 @router.put("/update_smoking/{isu}")
 @rollbar_handler
 async def update_smoking(isu: int, smoking: str):
@@ -134,7 +138,6 @@ async def update_smoking(isu: int, smoking: str):
         raise HTTPException(status_code=404, detail="User not found or smoking not updated")
 
     return {"message": "Smoking updated successfully"}
-
 
 
 @router.put("/update_weight/{isu}")
@@ -196,8 +199,7 @@ async def update_relationship_preferences(payload: TagSelectionModel):
         raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
 
     relationship_preferences = [
-        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"}
-        for pref in special_tags
+        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"} for pref in special_tags
     ]
 
     update_result = await user_collection.update_one(
