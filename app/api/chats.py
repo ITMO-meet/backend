@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, File
 from uuid import uuid4
 from bson import ObjectId
 from datetime import timedelta
@@ -76,7 +76,11 @@ async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = 
 
 @router.post("/upload_media")
 @rollbar_handler
-async def upload_media(isu: int, chat_id: str, file: UploadFile = File(...)):
+async def upload_media(
+    isu: int = Form(...),
+    chat_id: str = Form(...),
+    file: UploadFile = File(...)
+):
     file_extension = file.filename.split(".")[-1]
     filename = f"media/{chat_id}/{isu}_{uuid4()}.{file_extension}"
 
