@@ -2,7 +2,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import setup_rollbar
-from app.api import auth, chats, db, matches, profile, quizes, quizes_results, register, stories, tags, calendar
+from app.api import (
+    auth,
+    calendar,
+    chats,
+    db,
+    matches,
+    profile,
+    quizes,
+    quizes_results,
+    register,
+    stories,
+    tags,
+)
 
 app = FastAPI()
 setup_rollbar.init_rollbar()

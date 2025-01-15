@@ -146,7 +146,10 @@ async def login_with_password(payload: LoginRequest):
             return {"redirect": "/auth/dashboard", "isu": user_info["isu"]}
         else:
             await fill_user_info(user_info)
-            return {"redirect": "/auth/register/select_username", "isu": user_info["isu"]}
+            return {
+                "redirect": "/auth/register/select_username",
+                "isu": user_info["isu"],
+            }
 
 
 @router.get("/dashboard")
@@ -180,7 +183,6 @@ async def fill_user_info(user_info: dict):
             [],
             {"text": "", "icon": "alcohol"},
             {"text": "", "icon": "smoking"},
-
         ],
         "interests": [],
         "itmo": [
@@ -193,6 +195,7 @@ async def fill_user_info(user_info: dict):
     }
 
     await user_collection.insert_one(new_user)
+
 
 @rollbar_handler
 async def update_user_schedule(isu: int, token: str):

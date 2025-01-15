@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, File
-from uuid import uuid4
-from bson import ObjectId
 from datetime import timedelta
+from uuid import uuid4
 
-from app.utils.db import db_instance
-from app.setup_rollbar import rollbar_handler
+from bson import ObjectId
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+
 from app.models.chat import CreateChat, SendMessage
+from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 from app.utils.serializer import serialize
 
 router = APIRouter()

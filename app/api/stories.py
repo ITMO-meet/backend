@@ -1,20 +1,18 @@
-from fastapi import APIRouter, Form, HTTPException, File, UploadFile, Depends
-from uuid import uuid4
 from datetime import datetime, timedelta
-from app.utils.db import db_instance
-from app.setup_rollbar import rollbar_handler
-from app.models.story import GetStory
+from uuid import uuid4
+
 from bson import ObjectId
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+
+from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 
 router = APIRouter()
 
 
 @router.post("/create_story")
 @rollbar_handler
-async def create_story(
-    isu: int = Form(...),
-    file: UploadFile = File(...)
-):
+async def create_story(isu: int = Form(...), file: UploadFile = File(...)):
     stories_collection = db_instance.get_collection("stories")
 
     file_extension = file.filename.split(".")[-1]

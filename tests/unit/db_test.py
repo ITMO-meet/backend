@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.utils.db import Database
+
+import pytest
 from bson import ObjectId
+
+from app.utils.db import Database
 
 
 @pytest.fixture
@@ -384,6 +386,7 @@ def test_get_json_from_minio_success(db_instance_for_minio):
 
     mock_response = MagicMock()
     mock_response.read = MagicMock()
+
     def mock_json_load(stream):
         return mock_json_data
 

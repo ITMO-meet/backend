@@ -33,7 +33,10 @@ async def create_users(db, tags, special_tags):
                     "weight": 60 + i,
                     "zodiac_sign": "Aries",
                 },
-                "preferences": {"relationship_preference": relationship_preference, "gender_preference": "everyone"},
+                "preferences": {
+                    "relationship_preference": relationship_preference,
+                    "gender_preference": "everyone",
+                },
             }
         )
     user_ids = (await db["users"].insert_many(users)).inserted_ids
@@ -43,14 +46,39 @@ async def create_users(db, tags, special_tags):
 
 async def create_tags(db):
     tags = [
-        {"_id": ObjectId(), "name": "Communication", "is_special": 1, "description": "Общение"},
-        {"_id": ObjectId(), "name": "Dates", "is_special": 1, "description": "Свидания"},
-        {"_id": ObjectId(), "name": "Relationships", "is_special": 1, "description": "Отношения"},
-        {"_id": ObjectId(), "name": "Friendship", "is_special": 1, "description": "Дружба"},
+        {
+            "_id": ObjectId(),
+            "name": "Communication",
+            "is_special": 1,
+            "description": "Общение",
+        },
+        {
+            "_id": ObjectId(),
+            "name": "Dates",
+            "is_special": 1,
+            "description": "Свидания",
+        },
+        {
+            "_id": ObjectId(),
+            "name": "Relationships",
+            "is_special": 1,
+            "description": "Отношения",
+        },
+        {
+            "_id": ObjectId(),
+            "name": "Friendship",
+            "is_special": 1,
+            "description": "Дружба",
+        },
     ]
     for i in range(6):
         tags.append(
-            {"_id": ObjectId(), "name": f"Tag {i + 1}", "is_special": 0, "description": f"Description for Tag {i + 1}"}
+            {
+                "_id": ObjectId(),
+                "name": f"Tag {i + 1}",
+                "is_special": 0,
+                "description": f"Description for Tag {i + 1}",
+            }
         )
     tag_ids = (await db["tags"].insert_many(tags)).inserted_ids
     print(f"Inserted tags: {tag_ids}")
@@ -111,7 +139,12 @@ async def create_interactions(db, user_ids):
 async def create_questions(db):
     questions = []
     for i in range(10):
-        questions.append({"_id": ObjectId(), "description": f"Question {i + 1}: Do you enjoy outdoor activities?"})
+        questions.append(
+            {
+                "_id": ObjectId(),
+                "description": f"Question {i + 1}: Do you enjoy outdoor activities?",
+            }
+        )
     question_ids = (await db["questions"].insert_many(questions)).inserted_ids
     print(f"Inserted questions: {question_ids}")
     return question_ids

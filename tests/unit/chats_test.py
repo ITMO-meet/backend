@@ -1,11 +1,13 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock, patch
+
 from app.api.chats import (
     create_chat,
     get_chats_for_user,
-    send_message,
     get_messages,
+    send_message,
 )
 from app.models.chat import CreateChat, SendMessage
 
@@ -71,7 +73,10 @@ async def test_send_message_success():
         assert result == {"message_id": "message_id_123"}
 
         mock_create_message.assert_awaited_once_with(
-            chat_id=payload.chat_id, sender_id=payload.sender_id, receiver_id=payload.receiver_id, text=payload.text
+            chat_id=payload.chat_id,
+            sender_id=payload.sender_id,
+            receiver_id=payload.receiver_id,
+            text=payload.text,
         )
 
 

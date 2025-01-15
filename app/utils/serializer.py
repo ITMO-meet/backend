@@ -1,5 +1,6 @@
-from bson import ObjectId
 from typing import Any
+
+from bson import ObjectId
 
 
 def serialize(obj: Any) -> Any:

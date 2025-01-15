@@ -1,19 +1,22 @@
 # app/api/register.py
-from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import List
-from bson import ObjectId
-from app.utils.db import db_instance
-from app.models.tag import TagSelectionModel
-from app.models.user import (
-    UsernameSelectionModel,
-    GenderPreferencesSelectionModel,
-    RelationshipsPreferencesSelectionModel,
-)
-from app.models.profileDetails import ProfileDetailsModel
-from app.setup_rollbar import rollbar_handler
 from uuid import uuid4
 
+from bson import ObjectId
+from fastapi import APIRouter, File, HTTPException, UploadFile
+
+from app.models.profileDetails import ProfileDetailsModel
+from app.models.tag import TagSelectionModel
+from app.models.user import (
+    GenderPreferencesSelectionModel,
+    RelationshipsPreferencesSelectionModel,
+    UsernameSelectionModel,
+)
+from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
+
 router = APIRouter(prefix="/register")
+
 
 @router.post("/select_username")
 @rollbar_handler
@@ -23,6 +26,7 @@ async def select_username(payload: UsernameSelectionModel):
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or username not updated")
     return {"message": "Username updated successfully"}
+
 
 @router.post("/select_preferences")
 @rollbar_handler
@@ -35,6 +39,7 @@ async def select_preferences(payload: GenderPreferencesSelectionModel):
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or preference not updated")
     return {"message": "Gender preference updated successfully"}
+
 
 @router.post("/select_tags")
 @rollbar_handler
@@ -58,6 +63,7 @@ async def select_tags(payload: TagSelectionModel):
         raise HTTPException(status_code=404, detail="User not found or tags not updated")
     return {"message": "Tags selected successfully, proceed to the next step"}
 
+
 @router.post("/upload_logo")
 @rollbar_handler
 async def upload_logo(isu: int, file: UploadFile = File(...)):
@@ -75,6 +81,7 @@ async def upload_logo(isu: int, file: UploadFile = File(...)):
     if update_result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found or logo not uploaded")
     return {"message": "Avatar uploaded successfully", "avatar_url": file_url}
+
 
 @router.post("/upload_carousel")
 @rollbar_handler
@@ -102,6 +109,7 @@ async def upload_carousel(isu: int, files: List[UploadFile] = File(...)):
         "carousel_urls": carousel_urls,
     }
 
+
 @router.post("/profile_details")
 @rollbar_handler
 async def add_profile_details(payload: ProfileDetailsModel):
@@ -119,6 +127,7 @@ async def add_profile_details(payload: ProfileDetailsModel):
         raise HTTPException(status_code=404, detail="User not found or profile details not updated")
     return {"message": "Profile details updated successfully"}
 
+
 @router.post("/select_relationship")
 @rollbar_handler
 async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
@@ -130,22 +139,26 @@ async def select_relationship(payload: RelationshipsPreferencesSelectionModel):
         raise HTTPException(status_code=400, detail="Invalid preference ID format")
 
     # Fetch tags with is_special=1 to ensure they are relationship preferences
-    existing_preferences = await tags_collection.find(
-        {"_id": {"$in": preference_ids}, "is_special": 1}
-    ).to_list(length=None)
+    existing_preferences = await tags_collection.find({"_id": {"$in": preference_ids}, "is_special": 1}).to_list(
+        length=None
+    )
 
     if len(existing_preferences) != len(preference_ids):
         raise HTTPException(status_code=404, detail="Some preferences do not exist")
 
     # Manually assign the 'icon' field since it's not present in the tags collection
     relationship_preferences = [
-        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"}
+        {
+            "id": str(pref["_id"]),
+            "text": pref["name"],
+            "icon": "relationship_preferences",
+        }
         for pref in existing_preferences
     ]
 
     update_result = await user_collection.update_one(
         {"isu": payload.isu},
-        {"$set": {"relationship_preferences": relationship_preferences}}
+        {"$set": {"relationship_preferences": relationship_preferences}},
     )
 
     if update_result.modified_count == 0:

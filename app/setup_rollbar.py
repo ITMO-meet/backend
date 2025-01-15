@@ -1,7 +1,8 @@
-import rollbar
+import inspect
 import os
 from functools import wraps
-import inspect
+
+import rollbar
 from dotenv import load_dotenv
 
 load_dotenv()

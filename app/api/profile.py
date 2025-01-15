@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile
-from app.utils.db import db_instance
+from uuid import uuid4
+
+from bson import ObjectId
+from fastapi import APIRouter, File, HTTPException, UploadFile
+
 from app.models.tag import TagSelectionModel
 from app.models.user import GenderPreferencesSelectionModel, LanguageSelectionModel
 from app.setup_rollbar import rollbar_handler
-from bson import ObjectId
-from uuid import uuid4
-
+from app.utils.db import db_instance
 from app.utils.serializer import serialize
 
 router = APIRouter()
@@ -201,7 +202,12 @@ async def update_relationship_preferences(payload: TagSelectionModel):
         raise HTTPException(status_code=400, detail="Some tags do not exist or are not special tags")
 
     relationship_preferences = [
-        {"id": str(pref["_id"]), "text": pref["name"], "icon": "relationship_preferences"} for pref in special_tags
+        {
+            "id": str(pref["_id"]),
+            "text": pref["name"],
+            "icon": "relationship_preferences",
+        }
+        for pref in special_tags
     ]
 
     update_result = await user_collection.update_one(

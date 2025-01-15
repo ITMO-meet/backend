@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from app.utils.db import db_instance
 from app.setup_rollbar import rollbar_handler
+from app.utils.db import db_instance
 
 router = APIRouter()
 
@@ -15,11 +15,17 @@ async def get_tags():
     formatted_tags = [{"id": str(tag["_id"]), "text": tag["name"], "icon": "tag"} for tag in tags]
     return formatted_tags
 
+
 @router.get("/preferences")
 @rollbar_handler
 async def get_preferences():
     preferences = await db_instance.get_special_tags()
     formatted_preferences = [
-        {"id": preference["id"], "text": preference["name"], "icon": "relationship_preferences"} for preference in preferences
+        {
+            "id": preference["id"],
+            "text": preference["name"],
+            "icon": "relationship_preferences",
+        }
+        for preference in preferences
     ]
     return {"preferences": formatted_preferences}

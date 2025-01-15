@@ -1,14 +1,14 @@
 import datetime
-import os
 import io
 import json
+import os
+from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from dotenv import load_dotenv
 from minio import Minio
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import timedelta
 
 from app.setup_rollbar import rollbar_handler
 
@@ -67,16 +67,28 @@ class Database:
         minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
         minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
 
-        if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
+        if not all(
+            [
+                minio_calendar_access_key,
+                minio_calendar_secret_key,
+                self.minio_calendar_bucket_name,
+            ]
+        ):
             raise ValueError("MINIO calendar not found in env")
 
-        self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
+        self.minio_calendar_instance = Minio(
+            minio_endpoint,
+            minio_calendar_access_key,
+            minio_calendar_secret_key,
+            secure=minio_use_ssl,
+        )
 
         if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
             self.minio_calendar_instance.make_bucket(self.minio_calendar_bucket_name)
 
         if self.is_test_env:
             import asyncio
+
             asyncio.create_task(self.setup_test_db())
 
     @property
@@ -184,7 +196,7 @@ class Database:
 
         if not result.inserted_id:
             raise ValueError("Failed to save media record in database")
-        
+
         return str(result.inserted_id)
 
     @rollbar_handler
@@ -308,7 +320,14 @@ class Database:
         return [{"chat_id": chat["chat_id"], "isu_1": chat["isu_1"], "isu_2": chat["isu_2"]} for chat in result]
 
     @rollbar_handler
-    async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str = "", media_id: str = ""):
+    async def create_message(
+        self,
+        chat_id: str,
+        sender_id: int,
+        receiver_id: int,
+        text: str = "",
+        media_id: str = "",
+    ):
         message_data = {
             "chat_id": chat_id,
             "sender_id": sender_id,
@@ -360,7 +379,11 @@ class Database:
     @rollbar_handler
     async def like_user(self, user_id: int, target_id: int):
         await self.db["likes"].insert_one(
-            {"user_id": user_id, "target_id": target_id, "created_at": datetime.datetime.now(datetime.timezone.utc)}
+            {
+                "user_id": user_id,
+                "target_id": target_id,
+                "created_at": datetime.datetime.now(datetime.timezone.utc),
+            }
         )
 
         mutual_like = await self.db["likes"].find_one({"user_id": target_id, "target_id": user_id})
@@ -374,7 +397,11 @@ class Database:
     @rollbar_handler
     async def dislike_user(self, user_id: int, target_id: int):
         await self.db["dislikes"].insert_one(
-            {"user_id": user_id, "target_id": target_id, "created_at": datetime.datetime.now(datetime.timezone.utc)}
+            {
+                "user_id": user_id,
+                "target_id": target_id,
+                "created_at": datetime.datetime.now(datetime.timezone.utc),
+            }
         )
 
 

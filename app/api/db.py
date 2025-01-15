@@ -10,7 +10,10 @@ router = APIRouter()
 @rollbar_handler
 async def reset_db():
     if not db_instance.is_test_env:
-        raise HTTPException(status_code=403, detail="This operation is not allowed in the current environment")
+        raise HTTPException(
+            status_code=403,
+            detail="This operation is not allowed in the current environment",
+        )
 
     await db_instance.setup_test_db()
     return {"detail": "Database has been reset"}

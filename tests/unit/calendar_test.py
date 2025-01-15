@@ -1,9 +1,12 @@
+from unittest.mock import patch
+
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
-from unittest.mock import patch
-from app.utils.db import db_instance
+
 from app.api.calendar import router
+from app.utils.db import db_instance
+
 
 @pytest.fixture
 def app():
@@ -11,9 +14,10 @@ def app():
     app.include_router(router)
     return app
 
+
 @pytest.mark.asyncio
 async def test_get_calendar_success(app):
-    isu=123456
+    isu = 123456
     mock_schedule_data = {"data": {"1": {"9:00": "something1"}, "2": {"10:00": "something2"}}}
 
     with patch.object(db_instance, "get_json_from_minio", return_value=mock_schedule_data) as mock_db_call:
@@ -25,9 +29,10 @@ async def test_get_calendar_success(app):
         assert response.status_code == 200
         assert response.json() == mock_schedule_data["data"]
 
+
 @pytest.mark.asyncio
 async def test_get_calendar_not_found(app):
-    isu=123456
+    isu = 123456
     error_message = "Nothing found lol"
 
     with patch.object(db_instance, "get_json_from_minio", side_effect=ValueError(error_message)):
