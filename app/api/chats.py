@@ -30,7 +30,7 @@ async def create_chat(payload: CreateChat):
 async def get_chats_for_user(isu: int):
     chats = await db_instance.get_chats_by_user(isu)
     if not chats:
-        raise HTTPException(status_code=404, detail="chats not found for this user")
+        return {"chats": []}
 
     return {"chats": chats}
 
