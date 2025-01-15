@@ -43,6 +43,7 @@ async def send_message(payload: SendMessage):
         sender_id=payload.sender_id,
         receiver_id=payload.receiver_id,
         text=payload.text,
+        media_id=payload.media_id
     )
     return {"message_id": message_id}
 

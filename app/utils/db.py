@@ -307,12 +307,13 @@ class Database:
         return [{"chat_id": chat["chat_id"], "isu_1": chat["isu_1"], "isu_2": chat["isu_2"]} for chat in result]
 
     @rollbar_handler
-    async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
+    async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str = "", media_id: str = ""):
         message_data = {
             "chat_id": chat_id,
             "sender_id": sender_id,
             "receiver_id": receiver_id,
             "text": text,
+            "media_id": media_id,
             "timestamp": datetime.datetime.now(datetime.timezone.utc),
         }
 
