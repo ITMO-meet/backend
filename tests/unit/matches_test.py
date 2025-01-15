@@ -17,6 +17,7 @@ def app():
 async def test_get_random_person_success(app):
     user_id = 123456
     mock_person = {
+        "_id": "some_id",
         "isu": 654321,
         "username": "John Doe",
         "bio": "A random person",
@@ -30,12 +31,27 @@ async def test_get_random_person_success(app):
         "isStudent": True,
     }
 
-    with patch.object(db_instance, "get_random_person", AsyncMock(return_value=mock_person)):
+    with patch.object(
+        db_instance, "get_random_person", AsyncMock(return_value=mock_person)
+    ):
         async with AsyncClient(app=app, base_url="http://test") as ac:
             response = await ac.get("/random_person", params={"user_id": user_id})
 
-        assert response.status_code == 200
-        assert response.json() == mock_person
+    assert response.status_code == 200
+    expected_profile = {
+        "isu": mock_person["isu"],
+        "username": mock_person["username"],
+        "bio": mock_person["bio"],
+        "logo": mock_person["logo"],
+        "photos": mock_person["photos"],
+        "mainFeatures": mock_person["mainFeatures"],
+        "interests": mock_person["interests"],
+        "itmo": mock_person["itmo"],
+        "gender_preferences": mock_person["gender_preferences"],
+        "relationship_preferences": mock_person["relationship_preferences"],
+        "isStudent": mock_person["isStudent"],
+    }
+    assert response.json() == {"profile": expected_profile}
 
 
 @pytest.mark.asyncio

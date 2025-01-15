@@ -175,6 +175,12 @@ async def fill_user_info(user_info: dict):
             {"text": "", "icon": "weight"},
             {"text": user_info.get("gender", ""), "icon": "gender"},
             {"text": user_info.get("birthdate", ""), "icon": "birthdate"},
+            {"text": "", "icon": "worldview"},
+            {"text": "", "icon": "children"},
+            [],
+            {"text": "", "icon": "alcohol"},
+            {"text": "", "icon": "smoking"},
+
         ],
         "interests": [],
         "itmo": [

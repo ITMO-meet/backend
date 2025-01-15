@@ -33,3 +33,7 @@ class GenderPreferencesSelectionModel(BaseModel):
 class RelationshipsPreferencesSelectionModel(BaseModel):
     isu: int
     relationship_preference: List[str]
+
+class LanguageSelectionModel(BaseModel):
+    isu: int
+    languages: List[str]

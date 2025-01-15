@@ -8,6 +8,7 @@ from bson import ObjectId
 from dotenv import load_dotenv
 from minio import Minio
 from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import timedelta
 
 from app.setup_rollbar import rollbar_handler
 
@@ -64,10 +65,10 @@ class Database:
 
         minio_calendar_access_key = os.getenv("MINIO_CALENDAR_ACCESS_KEY")
         minio_calendar_secret_key = os.getenv("MINIO_CALENDAR_SECRET_KEY")
-        
+
         if not all([minio_calendar_access_key, minio_calendar_secret_key, self.minio_calendar_bucket_name]):
             raise ValueError("MINIO calendar not found in env")
-        
+
         self.minio_calendar_instance = Minio(minio_endpoint, minio_calendar_access_key, minio_calendar_secret_key, secure=minio_use_ssl)
 
         if not self.minio_calendar_instance.bucket_exists(self.minio_calendar_bucket_name):
@@ -75,7 +76,7 @@ class Database:
 
         if self.is_test_env:
             import asyncio
-            asyncio.run(self.setup_test_db())
+            asyncio.create_task(self.setup_test_db())
 
     @property
     def is_test_env(self) -> bool:
@@ -109,6 +110,14 @@ class Database:
         await create_stories(self.db)
 
     @rollbar_handler
+    def generate_presigned_url(self, object_name: str, expiration: timedelta = timedelta(hours=1)) -> str:
+        try:
+            url = self.minio_instance.presigned_get_object(self.minio_bucket_name, object_name, expires=expiration)
+            return url
+        except Exception as e:
+            raise ValueError(f"Failed to generate presigned URL for {object_name}: {e}")
+
+    @rollbar_handler
     def upload_file_to_minio(self, data, filename, content_type):
         self.minio_instance.put_object(
             self.minio_bucket_name,
@@ -119,7 +128,7 @@ class Database:
             content_type=content_type,
         )
         return f"{self.minio_bucket_name}/{filename}"
-    
+
     @rollbar_handler
     def uplod_json_to_minio(self, data: dict, filename):
         json_data = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -132,9 +141,9 @@ class Database:
             len(json_data),
             content_type="application/json",
         )
-        
+
         return f"{self.minio_calendar_bucket_name}/{filename}"
-    
+
     @rollbar_handler
     def get_json_from_minio(self, filename) -> dict:
         try:
@@ -143,14 +152,14 @@ class Database:
                 filename,
             )
             json_data = json.load(response)
-            
+
             response.close()
             response.release_conn()
 
             return json_data
         except Exception as e:
             raise ValueError(f"Failed to get json calendar from minio: {e}")
-        
+
     @rollbar_handler
     def delete_json_from_minio(self, filename):
         try:
@@ -279,7 +288,7 @@ class Database:
     @rollbar_handler
     async def get_chats_by_user(self, isu: int):
         result = await self.db["chats"].find({"$or": [{"isu_1": isu}, {"isu_2": isu}]}).to_list(length=None)
-        return [{"chat_id": chat["chat_id"]} for chat in result]
+        return [{"chat_id": chat["chat_id"], "isu_1": chat["isu_1"], "isu_2": chat["isu_2"]} for chat in result]
 
     @rollbar_handler
     async def create_message(self, chat_id: str, sender_id: int, receiver_id: int, text: str):
@@ -320,7 +329,10 @@ class Database:
         disliked_users = await self.db["dislikes"].find({"user_id": current_user_id}).to_list(length=None)
         disliked_ids = [d["target_id"] for d in disliked_users]
 
-        pipeline = [{"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}}, {"$sample": {"size": 1}}]
+        pipeline = [
+            {"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}},
+            {"$sample": {"size": 1}},
+        ]
 
         person = await self.db["users"].aggregate(pipeline).to_list(length=1)
         return person[0] if person else None
