@@ -37,7 +37,7 @@ async def create_story(isu: int, file: UploadFile = File(...)):
     return {"expDate": expiration_date, "id": str(insert_result.inserted_id)}
 
 
-@router.post("/get_story")
+@router.get("/get_story")
 @rollbar_handler
 async def get_story(payload: GetStory):
     stories_collection = db_instance.get_collection("stories")
@@ -47,12 +47,24 @@ async def get_story(payload: GetStory):
         raise HTTPException(status_code=403, detail="Access denied")
 
     story = await stories_collection.find_one({"_id": ObjectId(payload.story_id)})
+
+    print(story)
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+
+    path = story["url"]
+    bucket_prefix = f"{db_instance.minio_bucket_name}/"
+    if path.startswith(bucket_prefix):
+        path = path[len(bucket_prefix) :]
+
+    presigned_url = db_instance.generate_presigned_url(
+        object_name=path, expiration=timedelta(hours=3)
+    )
+
     return {
         "id": str(story["_id"]),
         "isu": story["isu"],
-        "url": story["url"],
+        "url": presigned_url,
         "expiration_date": story["expiration_date"],
     }
 
