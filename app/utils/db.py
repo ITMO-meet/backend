@@ -171,6 +171,22 @@ class Database:
             raise ValueError(f"Failed to remove calendar data from minio: {e}")
 
     @rollbar_handler
+    async def save_media(self, isu: int, chat_id: str, path: str) -> str:
+        media_data = {
+            "isu": isu,
+            "chat_id": chat_id,
+            "path": path,
+            "created_at": datetime.datetime.utcnow(),
+        }
+
+        result = await self.db["media"].insert_one(media_data)
+
+        if not result.inserted_id:
+            raise ValueError("Failed to save media record in database")
+        
+        return str(result.inserted_id)
+
+    @rollbar_handler
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
