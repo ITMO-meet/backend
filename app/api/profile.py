@@ -6,6 +6,8 @@ from app.setup_rollbar import rollbar_handler
 from bson import ObjectId
 from uuid import uuid4
 
+from app.utils.serializer import serialize
+
 router = APIRouter()
 
 
@@ -37,7 +39,7 @@ async def get_profile(isu: int):
     else:
         user["photos"] = []
 
-    return {"profile": user}
+    return {"profile": serialize(user)}
 
 
 @router.put("/update_bio/{isu}")
