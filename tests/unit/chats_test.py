@@ -40,11 +40,8 @@ async def test_get_chats_for_user_not_found():
     with patch("app.api.chats.db_instance.get_chats_by_user", new_callable=AsyncMock) as mock_get_chats_by_user:
         mock_get_chats_by_user.return_value = []
 
-        with pytest.raises(HTTPException) as exc_info:
-            await get_chats_for_user(isu)
-
-        assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "chats not found for this user"
+        chats = await get_chats_for_user(isu)
+        assert chats == {"chats": []}
 
         mock_get_chats_by_user.assert_awaited_once_with(isu)
 
@@ -87,13 +84,8 @@ async def test_get_messages_not_found():
     with patch("app.api.chats.db_instance.get_messages", new_callable=AsyncMock) as mock_get_messages:
         mock_get_messages.return_value = []
 
-        with pytest.raises(HTTPException) as exc_info:
-            await get_messages(chat_id, limit, offset)
-
-        assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "messages not found"
-
-        mock_get_messages.assert_awaited_once_with(chat_id=chat_id, limit=limit, offset=offset)
+        messages = await get_messages(chat_id, limit, offset)
+        assert messages == {"messages": []}
 
 
 @pytest.mark.asyncio
