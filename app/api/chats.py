@@ -52,12 +52,31 @@ async def send_message(payload: SendMessage):
 async def get_messages(
     chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)
 ):
-    messages = await db_instance.get_messages(
-        chat_id=chat_id, limit=limit, offset=offset
+    messages = (
+        await db_instance.get_messages(
+            chat_id=chat_id, limit=limit, offset=offset
+        )
     )
     if not messages:
         return {"messages": []}
-    return {"messages": messages}
+
+    formatted_messages = []
+    for message in messages:
+        formatted_message = {
+            "chat_id": message["chat_id"],
+            "message_id": message["message_id"],
+            "sender_id": message["sender_id"],
+            "receiver_id": message["receiver_id"],
+            "timestamp": message["timestamp"],
+        }
+        if "media_id" in message and message["media_id"]:
+            formatted_message["media_id"] = message["media_id"]
+        else:
+            formatted_message["text"] = message.get("text", "")
+
+        formatted_messages.append(formatted_message)
+
+    return {"messages": formatted_messages}
 
 
 @router.post("/upload_media")

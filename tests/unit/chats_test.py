@@ -103,6 +103,7 @@ async def test_get_messages_success():
     offset = 0
     messages = [
         {
+            "chat_id": "abobus131",
             "message_id": "msg1",
             "sender_id": 123456,
             "receiver_id": 789012,

@@ -331,10 +331,12 @@ class Database:
         )
         return [
             {
+                "chat_id": chat_id,
                 "message_id": str(message["_id"]),
                 "sender_id": message["sender_id"],
                 "receiver_id": message["receiver_id"],
-                "text": message["text"],
+                "text": message.get("text", None),
+                "media_id": message.get("media_id", None),
                 "timestamp": message["timestamp"],
             }
             for message in messages
