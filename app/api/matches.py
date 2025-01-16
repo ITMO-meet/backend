@@ -4,7 +4,6 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Query
 
 from typing import Optional, List
-from datetime import datetime, timezone
 
 from app.models.match import UserAction
 from app.setup_rollbar import rollbar_handler
@@ -28,12 +27,12 @@ async def get_random_person(
     disliked_users = (
         await db_instance.db["dislikes"].find({"user_id": user_id}).to_list(length=None)
     )
-    disliked_ids = [d["target_id"] for d in disliked_users]
+    disliked_ids = [dislikes["target_id"] for dislikes in disliked_users]
 
     liked_users = (
         await db_instance.db["likes"].find({"user_id": user_id}).to_list(length=None)
     )
-    liked_ids = [l["target_id"] for l in liked_users]
+    liked_ids = [likes["target_id"] for likes in liked_users]
 
     excluded_ids = disliked_ids + liked_ids
 
