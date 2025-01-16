@@ -21,7 +21,7 @@ app = FastAPI()
 setup_rollbar.init_rollbar()
 app.include_router(tags.router)
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
+#app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
 
 app.add_middleware(
     CORSMiddleware,
