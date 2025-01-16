@@ -159,10 +159,7 @@ class Database:
     @rollbar_handler
     def get_json_from_minio(self, filename) -> dict:
         try:
-            response = self.minio_calendar_instance.get_object(
-                self.minio_calendar_bucket_name,
-                filename,
-            )
+            response = self.minio_calendar_instance.get_object(self.minio_calendar_bucket_name, filename)
             json_data = json.load(response)
 
             response.close()
