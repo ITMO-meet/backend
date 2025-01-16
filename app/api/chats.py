@@ -1,4 +1,6 @@
 from datetime import timedelta
+import mimetypes
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from bson import ObjectId
@@ -92,23 +94,41 @@ async def upload_media(isu: int = Form(...), chat_id: str = Form(...), file: Upl
     return {"media_id": media_id}
 
 
+def get_media_type_from_extension(url: str) -> str:
+    path = urlparse(url).path
+    mime_type, _ = mimetypes.guess_type(path)
+    if mime_type:
+        if mime_type.startswith("image"):
+            return "image"
+        elif mime_type.startswith("audio"):
+            return "audio"
+        elif mime_type.startswith("video"):
+            return "video"
+    return "file"
+
+
 @router.get("/get_media")
-@rollbar_handler
 async def get_media(media_id: str):
     media_collection = db_instance.get_collection("media")
     media = await media_collection.find_one({"_id": ObjectId(media_id)})
 
-    path = media["path"]
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    path = media.get("path", "")
     bucket_prefix = f"{db_instance.minio_bucket_name}/"
     if path.startswith(bucket_prefix):
         path = path[len(bucket_prefix) :]
 
     presigned_url = db_instance.generate_presigned_url(object_name=path, expiration=timedelta(hours=3))
 
+    media_type = get_media_type_from_extension(presigned_url)
+
     return {
         "media_id": str(media["_id"]),
-        "isu": media["isu"],
-        "chat_id": media["chat_id"],
+        "isu": media.get("isu"),
+        "chat_id": media.get("chat_id"),
         "url": presigned_url,
-        "created_at": media["created_at"],
+        "media_type": media_type,
+        "created_at": media.get("created_at"),
     }
