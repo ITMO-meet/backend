@@ -180,11 +180,12 @@ class Database:
             raise ValueError(f"Failed to remove calendar data from minio: {e}")
 
     @rollbar_handler
-    async def save_media(self, isu: int, chat_id: str, path: str) -> str:
+    async def save_media(self, isu: int, chat_id: str, path: str, media_type: str = "file") -> str:
         media_data = {
             "isu": isu,
             "chat_id": chat_id,
             "path": path,
+            "media_type": media_type,
             "created_at": datetime.datetime.utcnow(),
         }
 

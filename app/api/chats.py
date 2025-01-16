@@ -79,7 +79,7 @@ async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = 
 
 @router.post("/upload_media")
 @rollbar_handler
-async def upload_media(isu: int = Form(...), chat_id: str = Form(...), file: UploadFile = File(...)):
+async def upload_media(isu: int = Form(...), chat_id: str = Form(...), media_type: str = Form(...), file: UploadFile = File(...)):
     file_extension = file.filename.split(".")[-1]
     filename = f"media/{chat_id}/{isu}_{uuid4()}.{file_extension}"
 
@@ -89,7 +89,7 @@ async def upload_media(isu: int = Form(...), chat_id: str = Form(...), file: Upl
         content_type=file.content_type or "application/octet-stream",
     )
 
-    media_id = await db_instance.save_media(isu, chat_id, file_url)
+    media_id = await db_instance.save_media(isu, chat_id, file_url, media_type)
 
     return {"media_id": media_id}
 
@@ -122,7 +122,7 @@ async def get_media(media_id: str):
 
     presigned_url = db_instance.generate_presigned_url(object_name=path, expiration=timedelta(hours=3))
 
-    media_type = get_media_type_from_extension(presigned_url)
+    media_type = media.get("media_type", get_media_type_from_extension(presigned_url))
 
     return {
         "media_id": str(media["_id"]),
