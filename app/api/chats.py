@@ -53,7 +53,7 @@ async def send_message(payload: SendMessage):
 
 @router.get("/get_messages/{chat_id}")
 @rollbar_handler
-async def get_messages(chat_id: str, limit: int = Query(5, gt=0), offset: int = Query(0, ge=0)):
+async def get_messages(chat_id: str, limit: int = Query(150, gt=0), offset: int = Query(0, ge=0)):
     messages = await db_instance.get_messages(chat_id=chat_id, limit=limit, offset=offset)
     if not messages:
         return {"messages": []}
