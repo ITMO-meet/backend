@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app import setup_rollbar
 from app.api import (
@@ -20,8 +19,6 @@ from app.api import (
 app = FastAPI()
 setup_rollbar.init_rollbar()
 app.include_router(tags.router)
-
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
 
 app.add_middleware(
     CORSMiddleware,
