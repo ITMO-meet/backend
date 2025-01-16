@@ -360,19 +360,6 @@ class Database:
         ]
 
     @rollbar_handler
-    async def get_random_person(self, current_user_id: int) -> Optional[Dict[str, Any]]:
-        disliked_users = await self.db["dislikes"].find({"user_id": current_user_id}).to_list(length=None)
-        disliked_ids = [d["target_id"] for d in disliked_users]
-
-        pipeline = [
-            {"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}},
-            {"$sample": {"size": 1}},
-        ]
-
-        person = await self.db["users"].aggregate(pipeline).to_list(length=1)
-        return person[0] if person else None
-
-    @rollbar_handler
     async def like_user(self, user_id: int, target_id: int):
         await self.db["likes"].insert_one(
             {
