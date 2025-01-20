@@ -17,6 +17,7 @@ from app.api import (
     tags,
     premium,
 )
+from app.utils import scheduler
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
@@ -43,6 +44,10 @@ app.include_router(calendar.router, prefix="/calendar")
 app.include_router(premium.router, prefix="/premium")
 app.include_router(db.router, prefix="/db")
 
+@app.on_event("startup")
+async def startup_event():
+    print("Scheduler started")
+    scheduler.start_scheduler()
 
 def main():
     return "Hello, world!"
