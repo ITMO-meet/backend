@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 import datetime
 
 from app.setup_rollbar import rollbar_handler
@@ -10,7 +10,8 @@ router = APIRouter()
 
 @router.post("/set_premium")
 @rollbar_handler
-async def set_premium(isu: int):
+async def set_premium(payload: dict = Body(...)):
+    isu = payload.get("isu")
     existing_premium = await db_instance.db["premium"].find_one(
         {"isu": isu, "validUntil": {"$gte": datetime.datetime.utcnow()}}
     )
