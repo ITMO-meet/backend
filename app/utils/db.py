@@ -4,6 +4,8 @@ import json
 import os
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
+from dateutil.relativedelta import relativedelta
+
 
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -400,6 +402,16 @@ class Database:
                 "created_at": datetime.datetime.now(datetime.timezone.utc),
             }
         )
+    
+    @rollbar_handler
+    async def create_premium(self, isu: int):
+        chat_data = {
+            "isu": isu,
+            "validUntil": datetime.datetime.now()+relativedelta(months=1),
+            "isPremium": True,
+        }
+        result = await self.db["premium"].insert_one(chat_data)
+        return str(result.inserted_id)
 
 
 db_instance = Database()
