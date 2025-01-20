@@ -15,13 +15,14 @@ from app.api import (
     register,
     stories,
     tags,
+    premium,
 )
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
 app.include_router(tags.router)
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
+#app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +40,7 @@ app.include_router(chats.router, prefix="/chats")
 app.include_router(stories.router, prefix="/stories")
 app.include_router(matches.router, prefix="/matches")
 app.include_router(calendar.router, prefix="/calendar")
+app.include_router(premium.router, prefix="/premium")
 app.include_router(db.router, prefix="/db")
 
 
