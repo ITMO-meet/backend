@@ -26,3 +26,4 @@ aiohttp==3.11.10
 minio==7.2.12
 python-multipart==0.0.19
 uvicorn==0.34.0
+apscheduler==3.11.0
