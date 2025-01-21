@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app import setup_rollbar
 from app.api import (
@@ -9,21 +8,19 @@ from app.api import (
     chats,
     db,
     matches,
+    premium,
     profile,
     quizes,
     quizes_results,
     register,
     stories,
     tags,
-    premium,
 )
 from app.utils import scheduler
 
 app = FastAPI()
 setup_rollbar.init_rollbar()
 app.include_router(tags.router)
-
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["itmomeet.ru", "www.itmomeet.ru"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,10 +41,12 @@ app.include_router(calendar.router, prefix="/calendar")
 app.include_router(premium.router, prefix="/premium")
 app.include_router(db.router, prefix="/db")
 
+
 @app.on_event("startup")
 async def startup_event():
     print("Scheduler started")
     scheduler.start_scheduler()
+
 
 def main():
     return "Hello, world!"
