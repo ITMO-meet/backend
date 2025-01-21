@@ -4,6 +4,8 @@ import json
 import os
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
+from dateutil.relativedelta import relativedelta
+
 
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -361,19 +363,6 @@ class Database:
         ]
 
     @rollbar_handler
-    async def get_random_person(self, current_user_id: int) -> Optional[Dict[str, Any]]:
-        disliked_users = await self.db["dislikes"].find({"user_id": current_user_id}).to_list(length=None)
-        disliked_ids = [d["target_id"] for d in disliked_users]
-
-        pipeline = [
-            {"$match": {"isu": {"$ne": current_user_id, "$nin": disliked_ids}}},
-            {"$sample": {"size": 1}},
-        ]
-
-        person = await self.db["users"].aggregate(pipeline).to_list(length=1)
-        return person[0] if person else None
-
-    @rollbar_handler
     async def like_user(self, user_id: int, target_id: int):
         await self.db["likes"].insert_one(
             {
@@ -400,6 +389,16 @@ class Database:
                 "created_at": datetime.datetime.now(datetime.timezone.utc),
             }
         )
+    
+    @rollbar_handler
+    async def create_premium(self, isu: int):
+        chat_data = {
+            "isu": isu,
+            "validUntil": datetime.datetime.now()+relativedelta(months=1),
+            "isPremium": True,
+        }
+        result = await self.db["premium"].insert_one(chat_data)
+        return str(result.inserted_id)
 
 
 db_instance = Database()

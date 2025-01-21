@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+
+from typing import Optional, List
 
 from app.models.match import UserAction
 from app.setup_rollbar import rollbar_handler
@@ -12,10 +14,139 @@ router = APIRouter()
 
 @router.get("/random_person")
 @rollbar_handler
-async def get_random_person(user_id: int):
-    person = await db_instance.get_random_person(user_id)
-    if not person:
+async def get_random_person(
+    user_id: int,
+    gender: str = "Everyone",
+    min_age: int = 18,
+    max_age: int = 60,
+    min_height: float = 75.0,
+    max_height: float = 300.0,
+    relationship_preferences: Optional[List[str]] = Query(None),
+):
+
+    disliked_users = (
+        await db_instance.db["dislikes"].find({"user_id": user_id}).to_list(length=None)
+    )
+    disliked_ids = [dislikes["target_id"] for dislikes in disliked_users]
+
+    liked_users = (
+        await db_instance.db["likes"].find({"user_id": user_id}).to_list(length=None)
+    )
+    liked_ids = [likes["target_id"] for likes in liked_users]
+
+    excluded_ids = disliked_ids + liked_ids
+
+    match_conditions = {"isu": {"$ne": user_id, "$nin": excluded_ids}}
+
+    if gender.lower() != "everyone":
+
+        match_conditions["mainFeatures"] = {
+            "$elemMatch": {"icon": "gender", "text": gender.lower()}
+        }
+
+    pipeline = []
+
+    pipeline.append({"$match": match_conditions})
+
+    pipeline.append(
+        {
+            "$addFields": {
+                "birthdateObj": {
+                    "$dateFromString": {
+                        "dateString": {
+                            "$reduce": {
+                                "input": {
+                                    "$filter": {
+                                        "input": "$mainFeatures",
+                                        "as": "mf",
+                                        "cond": {"$eq": ["$$mf.icon", "birthdate"]},
+                                    }
+                                },
+                                "initialValue": "",
+                                "in": "$$this.text",
+                            }
+                        },
+                        "format": "%Y-%m-%d",
+                    }
+                }
+            }
+        }
+    )
+
+    pipeline.append(
+        {
+            "$addFields": {
+                "age": {
+                    "$dateDiff": {
+                        "startDate": "$birthdateObj",
+                        "endDate": datetime.now(timezone.utc),
+                        "unit": "year",
+                    }
+                }
+            }
+        }
+    )
+
+    pipeline.append({"$match": {"age": {"$gte": min_age, "$lte": max_age}}})
+
+    if min_height is not None and max_height is not None:
+        pipeline.append(
+            {
+                "$addFields": {
+                    "heightValue": {
+                        "$reduce": {
+                            "input": {
+                                "$filter": {
+                                    "input": "$mainFeatures",
+                                    "as": "mf",
+                                    "cond": {"$eq": ["$$mf.icon", "height"]},
+                                }
+                            },
+                            "initialValue": "",
+                            "in": "$$this.text",
+                        }
+                    }
+                }
+            }
+        )
+        pipeline.append(
+            {
+                "$addFields": {
+                    "heightNum": {
+                        "$convert": {
+                            "input": {
+                                "$arrayElemAt": [{"$split": ["$heightValue", " "]}, 0]
+                            },
+                            "to": "double",
+                            "onError": 0.0,
+                            "onNull": 0.0,
+                        }
+                    }
+                }
+            }
+        )
+
+        pipeline.append(
+            {"$match": {"heightNum": {"$gte": min_height, "$lte": max_height}}}
+        )
+
+    if relationship_preferences:
+        pipeline.append(
+            {
+                "$match": {
+                    "relationship_preferences.id": {"$in": relationship_preferences}
+                }
+            }
+        )
+
+    pipeline.append({"$sample": {"size": 1}})
+
+    person_cursor = db_instance.db["users"].aggregate(pipeline)
+    person_list = await person_cursor.to_list(length=1)
+    if not person_list:
         raise HTTPException(status_code=404, detail="No more persons available")
+
+    person = person_list[0]
 
     person["_id"] = str(person["_id"])
 
@@ -32,7 +163,10 @@ async def get_random_person(user_id: int):
         person["logo"] = None
 
     if person.get("photos"):
-        person["photos"] = [db_instance.generate_presigned_url(clean_object_key(photo)) for photo in person["photos"]]
+        person["photos"] = [
+            db_instance.generate_presigned_url(clean_object_key(photo))
+            for photo in person["photos"]
+        ]
     else:
         person["photos"] = []
 
@@ -74,7 +208,9 @@ async def like_person(payload: UserAction):
 async def superlike_person(payload: UserAction):
     result = await db_instance.like_user(payload.user_id, payload.target_id)
 
-    reverse_like = await db_instance.db["likes"].find_one({"user_id": payload.target_id, "target_id": payload.user_id})
+    reverse_like = await db_instance.db["likes"].find_one(
+        {"user_id": payload.target_id, "target_id": payload.user_id}
+    )
 
     if not reverse_like:
         await db_instance.db["likes"].insert_one(
@@ -93,7 +229,9 @@ async def superlike_person(payload: UserAction):
         }
     else:
         chat_id = str(ObjectId())
-        await db_instance.create_chat(chat_id=chat_id, isu_1=payload.user_id, isu_2=payload.target_id)
+        await db_instance.create_chat(
+            chat_id=chat_id, isu_1=payload.user_id, isu_2=payload.target_id
+        )
 
         return {
             "message": "You have a match!",
@@ -124,7 +262,9 @@ async def block_person(payload: UserAction):
     if result.deleted_count > 0:
         return {"message": "user blocked, chat deleted"}
     else:
-        raise HTTPException(status_code=404, details="chat not found or user already blocked")
+        raise HTTPException(
+            status_code=404, details="chat not found or user already blocked"
+        )
 
 
 @router.get("/liked_me")
@@ -137,7 +277,11 @@ async def get_matches(isu: int):
 
     user_ids = [like["user_id"] for like in likes]
 
-    users = await db_instance.db["users"].find({"isu": {"$in": user_ids}}).to_list(length=None)
+    users = (
+        await db_instance.db["users"]
+        .find({"isu": {"$in": user_ids}})
+        .to_list(length=None)
+    )
 
     result = []
     for user in users:
