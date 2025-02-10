@@ -1,7 +1,8 @@
 # app/api/push.py
 from fastapi import APIRouter, HTTPException, Body
 from pywebpush import webpush, WebPushException
-import os, json
+import os
+import json
 
 router = APIRouter()
 
