@@ -11,6 +11,8 @@ from app.setup_rollbar import rollbar_handler
 from app.utils.db import db_instance
 from app.utils.serializer import serialize
 
+from app.api.push import send_push_internally
+
 router = APIRouter()
 
 
@@ -41,6 +43,7 @@ async def get_chats_for_user(isu: int):
 @router.post("/send_message")
 @rollbar_handler
 async def send_message(payload: SendMessage):
+    # 1. Сохраняем сообщение в БД
     message_id = await db_instance.create_message(
         chat_id=payload.chat_id,
         sender_id=payload.sender_id,
@@ -48,6 +51,19 @@ async def send_message(payload: SendMessage):
         text=payload.text,
         media_id=payload.media_id,
     )
+
+    # 2. Формируем данные для push-уведомления
+    push_data = {
+        "title": "Новое сообщение",
+        "body": f"Новое сообщение от {payload.sender_id}: {payload.text or 'Медиа'}",
+        "icon": "/logo192.png",    # путь к иконке
+        "badge": "/badge.png",     # путь к badge
+        "chatUrl": f"/chat/{payload.chat_id}"  # для открытия нужного чата
+    }
+
+    # 3. Отправляем пуш-уведомление только получателю
+    send_push_internally(push_data, payload.receiver_id)
+
     return {"message_id": message_id}
 
 

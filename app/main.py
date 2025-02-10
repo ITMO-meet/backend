@@ -15,6 +15,7 @@ from app.api import (
     register,
     stories,
     tags,
+    push  # добавляем push
 )
 from app.utils import scheduler
 
@@ -40,17 +41,15 @@ app.include_router(matches.router, prefix="/matches")
 app.include_router(calendar.router, prefix="/calendar")
 app.include_router(premium.router, prefix="/premium")
 app.include_router(db.router, prefix="/db")
-
+app.include_router(push.router, prefix="/push")  # регистрируем push роутер
 
 @app.on_event("startup")
 async def startup_event():
     print("Scheduler started")
     scheduler.start_scheduler()
 
-
 def main():
     return "Hello, world!"
-
 
 if __name__ == "__main__":
     main()
